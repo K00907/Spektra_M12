@@ -253,7 +253,9 @@ enum CineonLUT {
     static func makeTexture(device: MTLDevice) -> MTLTexture? {
         guard let url = bundled(.proPhoto), let text = try? String(contentsOf: url, encoding: .utf8),
               let (n, rgba) = parse(text) else { return nil }
-        let half = rgba.map { Float16($0) }
+        // Intel port: `Float16` does not exist on x86_64 macOS, so the
+        // half-floats are made by vImage, bit for bit what the cast gives.
+        let half = HalfFloat.bits(rgba)
         let d = MTLTextureDescriptor()
         d.textureType = .type3D
         d.pixelFormat = .rgba16Float

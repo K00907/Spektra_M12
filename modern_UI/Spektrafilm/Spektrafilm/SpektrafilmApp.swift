@@ -179,7 +179,9 @@ struct EditorCommands: Commands {
         // Withdrawn with the rest of the mask system (`FeatureFlags.masks`):
         // a menu is a promise, and this one cannot be kept while the feature
         // is not on offer.
-        if FeatureFlags.masks {
+        // Intel port: an `if` in a `CommandsBuilder` is macOS 13, and
+        // `FeatureFlags.masks` is a constant `false`, so the menu is compiled out.
+        #if SPEKTRALAB_MASK_MENU
             CommandMenu("Mask") {
                 Button("Add Linear Gradient") { session.addMask(.linearGradient) }
                     .keyboardShortcut("m", modifiers: [.shift])
@@ -197,7 +199,7 @@ struct EditorCommands: Commands {
                 Button("Delete Mask") { if let id = session.selectedMaskID { session.deleteMask(id) } }
                     .disabled(session.selectedMaskID == nil)
             }
-        }
+        #endif
         CommandMenu("Crop") {
             Button("Rotate Left") { session.geometry = session.geometry.turned(by: -1) }
                 .keyboardShortcut("[", modifiers: [.command, .option])

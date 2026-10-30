@@ -102,7 +102,7 @@ struct LatitudeSection: View {
         let value = Text(String(format: "%.1f %%", v * 100))
             .font(Theme.Font.value)
             .foregroundStyle(warn && v >= 0.005 ? Theme.accent : Theme.text)
-        return Text("\(Text(label).font(Theme.Font.meta).foregroundStyle(Theme.Ink.tertiary)) \(value)")
+        return Text("\(Text(label).font(Theme.Font.meta).foregroundColor(Theme.Ink.tertiary)) \(value)")
             .fixedSize(horizontal: false, vertical: true)
     }
 
@@ -219,7 +219,7 @@ struct LatitudePlot: View {
                 ctx.stroke(p, with: .color(Theme.secondaryText.opacity(0.8)),
                            style: StrokeStyle(lineWidth: 0.75, dash: [2, 1.5]))
                 let label = ctx.resolve(Text(LatitudeSection.stops(ev)).font(Theme.Font.meta)
-                    .foregroundStyle(Theme.secondaryText))
+                    .foregroundColor(Theme.secondaryText))
                 // Outside the line, unless that would run past the plot's
                 // edge — a boundary near −8 or +8 put "−6.94" half off the
                 // rail (1.2.2) — in which case it flips to the line's inside.
@@ -233,7 +233,7 @@ struct LatitudePlot: View {
             // The axis: stops from the metered mid-grey.
             for e in stride(from: axis.lowerBound, through: axis.upperBound, by: 2) {
                 let t = e == 0 ? "0" : (e > 0 ? "+" : "\u{2212}") + String(Int(abs(e)))
-                let label = ctx.resolve(Text(t).font(Theme.Font.meta).foregroundStyle(Theme.Ink.tertiary))
+                let label = ctx.resolve(Text(t).font(Theme.Font.meta).foregroundColor(Theme.Ink.tertiary))
                 let anchor: UnitPoint = e == axis.lowerBound ? .topLeading : e == axis.upperBound ? .topTrailing : .top
                 ctx.draw(label, at: CGPoint(x: x(e), y: bandY + bandH + 3), anchor: anchor)
             }

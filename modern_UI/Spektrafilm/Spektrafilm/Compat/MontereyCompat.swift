@@ -7,6 +7,7 @@
 //  or a guard for a GPU that is not an Apple GPU. Each shim keeps the shape of
 //  the API it replaces, so the call sites read the same as upstream.
 
+import Accelerate
 import AppKit
 import Metal
 import SwiftUI
@@ -23,12 +24,34 @@ extension Task where Success == Never, Failure == Never {
 
 // MARK: - NSLocking.withLock is macOS 13
 
-extension NSLock {
+extension NSLocking {
     /// `NSLocking.withLock(_:)`, which Foundation only ships from macOS 13.
     func withLockCompat<R>(_ body: () throws -> R) rethrows -> R {
         lock()
         defer { unlock() }
         return try body()
+    }
+}
+
+// MARK: - Float16 is arm64-only on macOS
+
+enum HalfFloat {
+    /// IEEE half-float bit patterns for `values`, round-to-nearest-even —
+    /// what `Float16(x)` gives on Apple silicon.
+    static func bits(_ values: [Float]) -> [UInt16] {
+        var src = values
+        var dst = [UInt16](repeating: 0, count: values.count)
+        guard !values.isEmpty else { return dst }
+        src.withUnsafeMutableBufferPointer { s in
+            dst.withUnsafeMutableBufferPointer { d in
+                var sb = vImage_Buffer(data: s.baseAddress, height: 1,
+                                       width: vImagePixelCount(s.count), rowBytes: s.count * 4)
+                var db = vImage_Buffer(data: d.baseAddress, height: 1,
+                                       width: vImagePixelCount(d.count), rowBytes: d.count * 2)
+                _ = vImageConvert_PlanarFtoPlanar16F(&sb, &db, vImage_Flags(kvImageNoFlags))
+            }
+        }
+        return dst
     }
 }
 

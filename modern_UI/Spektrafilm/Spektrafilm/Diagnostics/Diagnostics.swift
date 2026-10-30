@@ -491,9 +491,12 @@ final class Diagnostics {
     }
 
     private nonisolated static func highestFamily(_ device: MTLDevice) -> String {
-        let families: [(String, MTLGPUFamily)] = [
-            ("apple9", .apple9), ("apple8", .apple8), ("apple7", .apple7), ("metal3", .metal3),
+        var families: [(String, MTLGPUFamily)] = [
+            ("apple9", .apple9), ("apple8", .apple8), ("apple7", .apple7),
         ]
+        // Intel port: `.metal3` is macOS 13; `.mac2` is what an AMD GPU on 12 answers.
+        if #available(macOS 13, *) { families.append(("metal3", .metal3)) }
+        families.append(("mac2", .mac2))
         return families.first { device.supportsFamily($0.1) }?.0 ?? "unknown"
     }
 

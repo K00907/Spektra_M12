@@ -119,7 +119,7 @@ struct AgentsSettingsPage: View {
     }
 
     private func caption(_ text: String) -> Text {
-        Text(text).font(Theme.Font.caption).foregroundStyle(Theme.dim)
+        Text(text).font(Theme.Font.caption).foregroundColor(Theme.dim)
     }
 
     private func firstSentence(_ s: String) -> String {
