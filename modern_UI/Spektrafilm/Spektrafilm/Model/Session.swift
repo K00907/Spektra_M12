@@ -1896,6 +1896,29 @@ final class Session: CanvasHost {
                 key)
     }
 
+    /// The native-resolution print from disk (Intel build; see `load`).
+    private func cachedFullPrint(for url: URL) async -> (texture: MTLTexture, sourceSize: CGSize,
+                                                          costMs: Double, key: CacheKey)? {
+        guard let diskCache else { return nil }
+        let key = Self.printCacheKey(
+            url: url,
+            params: sidecar.params,
+            tier: .full,
+            previewLongEdge: previewLongEdge,
+            engineVersion: diagnostics.engineVersion ?? "unknown"
+        )
+        guard let payload = try? await diskCache.load(key),
+              payload.kind == .printFull,
+              payload.format == "rgba16Unorm",
+              let texture = renderer.store.uploadRGBA16(
+                  data: payload.data, width: payload.width, height: payload.height
+              ) else { return nil }
+        return (texture,
+                CGSize(width: payload.sourceWidth, height: payload.sourceHeight),
+                payload.costMs,
+                key)
+    }
+
     /// Resolve a display picture without constructing a `DecodedImage`.
     ///
     /// The disk entry is deliberately RGBA-only. It may be drawn and compared,
@@ -1993,6 +2016,27 @@ final class Session: CanvasHost {
             clock.lap("print-cache")
             noteOpen(clock, url: url, mode: "print-cache", pixels: picture.sourceSize)
             status = "\(url.lastPathComponent)  ·  restored print"
+            // Intel build, by request: going back to a photograph should be
+            // sharp, not the preview-sized print. The native-resolution print
+            // is written to the same disk cache when a frame is left, so it is
+            // restored too; if it is not there (not yet written, or evicted),
+            // the frame is developed again, which ends at a native render.
+            if wantsFullRender {
+                if let full = await cachedFullPrint(for: url) {
+                    guard !Task.isCancelled, selection == url else { return }
+                    renderer.store.setFullRender(
+                        full.texture, stamp: Self.printStamp(sidecar.params), costMs: full.costMs,
+                        cacheKey: full.key,
+                        sourceWidth: Int(full.sourceSize.width.rounded()),
+                        sourceHeight: Int(full.sourceSize.height.rounded()),
+                        for: url
+                    )
+                    renderer.setFullRender(full.texture)
+                } else if !batchExporting {
+                    guard !Task.isCancelled, selection == url else { return }
+                    requestPrint()
+                }
+            }
             return
         }
         if !requiresDecode, !wantsDevelop, let picture = await displayPicture(for: url, settings: settings) {
