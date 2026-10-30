@@ -1497,6 +1497,12 @@ final class Session: CanvasHost {
         if let leaving = selection, leaving != url {
             enqueuePrintWriteback(for: leaving)
         }
+        // Intel build, by request: a photograph that has never been edited
+        // opens with the film and paper of the one on the canvas, and develops
+        // straight away, as the web version does. Upstream opens onto the bare
+        // decode and waits for 配光 or an edit.
+        let carried: (film: String, print: String)? = selection == nil || batchExporting ? nil
+            : (sidecar.params.filmStock, sidecar.params.printStock)
         loadTask?.cancel()
         selection = url
         filmCanvasOn = nil
@@ -1513,7 +1519,17 @@ final class Session: CanvasHost {
         wantsDevelop = false
         developTask?.cancel(); developTask = nil
         renderer.dropFullRender()
-        sidecar = Sidecar.load(for: url) ?? Sidecar()
+        if let saved = Sidecar.load(for: url) {
+            sidecar = saved
+        } else {
+            var fresh = Sidecar()
+            if let carried {
+                fresh.params.filmStock = carried.film
+                fresh.params.printStock = carried.print
+            }
+            sidecar = fresh
+            if !batchExporting { wantsDevelop = true }
+        }
         // Except a frame with an edit the engine has not rendered — a paste
         // made while another frame was on the canvas (RFC-027 §4). That edit
         // asked for a develop as surely as a slider does, and without one the
@@ -2686,11 +2702,45 @@ final class Session: CanvasHost {
         guard !urls.isEmpty else { return }
         let listed = Set(frames.map { $0.id.standardizedFileURL })
         let known = urls.filter { listed.contains($0.standardizedFileURL) }
-        guard known.count == urls.count else { open(urls: urls); return }
+        guard known.count == urls.count else {
+            if appendDropped(urls) { return }
+            open(urls: urls)
+            return
+        }
         if let own, urls.count == 1, urls[0].standardizedFileURL == own.standardizedFileURL { return }
         if urls.count == 1, let frame = frames.first(where: { $0.id.standardizedFileURL == urls[0].standardizedFileURL }) {
             click(frame.id)
         }
+    }
+
+    /// Intel build, by request: photographs dropped from outside **join** the
+    /// filmstrip instead of replacing it, so the ones dropped before stay a
+    /// click away (the web version's behaviour). A folder or a half-frame pair
+    /// is still a new set, as upstream, and so is a drop onto an empty strip.
+    private func appendDropped(_ urls: [URL]) -> Bool {
+        guard !frames.isEmpty, !batchExporting else { return false }
+        let plainFiles = urls.allSatisfy { u in
+            var isDir: ObjCBool = false
+            let exists = FileManager.default.fileExists(atPath: u.path, isDirectory: &isDir)
+            return exists && !isDir.boolValue && !HalfFramePair.isPair(u)
+        }
+        guard plainFiles else { return false }
+        let files = Library.frames(from: urls)
+        guard let first = files.first else { return false }
+        let listed = Set(frames.map { $0.id.standardizedFileURL })
+        let fresh = files.filter { !listed.contains($0.id.standardizedFileURL) }
+        for f in fresh {
+            let saved = Sidecar.load(for: f.id)
+            frames.append(f)
+            frameStates[f.id] = saved?.state ?? .unprocessed
+            savedGeometry[f.id] = saved?.geometry ?? .default
+            if saved?.params.cutsFrame == true { filmEdgeThumbnails.insert(f.id) }
+        }
+        libraryTitle = "\(frames.count) files"
+        let target = fresh.first?.id
+            ?? frames.first(where: { $0.id.standardizedFileURL == first.id.standardizedFileURL })?.id
+        if let target { click(target) }
+        return true
     }
 
     /// Put a new item in the filmstrip (a pair made in this session).

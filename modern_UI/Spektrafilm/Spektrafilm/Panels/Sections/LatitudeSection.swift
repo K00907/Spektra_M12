@@ -101,7 +101,7 @@ struct LatitudeSection: View {
     private func share(_ label: String, _ v: Double, warn: Bool) -> some View {
         let value = Text(String(format: "%.1f %%", v * 100))
             .font(Theme.Font.value)
-            .foregroundStyle(warn && v >= 0.005 ? Theme.accent : Theme.text)
+            .foregroundColor(warn && v >= 0.005 ? Theme.accent : Theme.text)   // Intel port: Text.foregroundStyle is macOS 14
         return Text("\(Text(label).font(Theme.Font.meta).foregroundColor(Theme.Ink.tertiary)) \(value)")
             .fixedSize(horizontal: false, vertical: true)
     }
