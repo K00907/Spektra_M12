@@ -5190,7 +5190,12 @@ extension Session {
         func layer(_ side: HalfFramePair.Side) -> MTLTexture? {
             let own = p[side]?.adjustments
             guard prints[side] != nil || (own != nil && own != filmGrade) else { return nil }
-            return renderer.applyAdjustments(own ?? filmGrade, to: prints[side] ?? base)
+            // Intel port: no `??` here. Its autoclosure is main-actor isolated
+            // and captures the task-isolated `base`, which Swift 6.3 refuses
+            // in this build (region isolation, "sending 'base'").
+            let source: MTLTexture
+            if let own = prints[side] { source = own } else { source = base }
+            return renderer.applyAdjustments(own ?? filmGrade, to: source)
         }
         return renderer.compositePair(base: graded, first: layer(.left), firstRect: ra,
                                       second: layer(.right), secondRect: rb)
