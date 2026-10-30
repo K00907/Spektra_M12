@@ -23,9 +23,10 @@
 //  explanation is only wanted by the user who wonders why the rows are dim.
 
 import SwiftUI
+import Perception
 
 struct WhiteBalanceRows: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
     private var isRAW: Bool { session.shotIsRAW }
     /// Nothing to re-balance, and nothing to explain yet: no frame is open.
@@ -35,7 +36,7 @@ struct WhiteBalanceRows: View {
     private var asShot: WhiteBalanceBoxes.AsShot? { session.asShotWhiteBalance }
     private var boxes: WhiteBalanceBoxes { session.whiteBalanceBoxes }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: Theme.Metric.rowSpacing) {
             ScrubSlider(label: L(.cameraTemperature),
                         sublabelView: asShotLine(Binding(get: { boxes.temp },
@@ -62,7 +63,7 @@ struct WhiteBalanceRows: View {
         // from the drawing is recorded here rather than closed by coupling
         // temperature to tint.
         .rowEnabled(enabled, because: L(.reasonDecodeWBDisabled))
-    }
+    } }
 
     /// "As Shot ☐" — the second label line, as the drawing has it.
     private func asShotLine(_ isOn: Binding<Bool>) -> AnyView {

@@ -42,9 +42,10 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct SettingsWindow: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     /// The observable the RFC-016 work put the settings on. Read directly
     /// rather than copied into `@State`: a copy is a second source of truth,
     /// and the whole point of §8.5 is that there is one.
@@ -63,7 +64,7 @@ struct SettingsWindow: View {
     /// own layout.
     @AppStorage(Session.uiKey + "settingsPage") private var page: SettingsPage = .general
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             SettingsTabBar(selection: $page)
             Hairline()
@@ -108,7 +109,7 @@ struct SettingsWindow: View {
             }
         }
         .onDisappear { ticker?.invalidate(); ticker = nil }
-    }
+    } }
 
     // MARK: - language
 
@@ -650,12 +651,12 @@ struct SettingsWindow: View {
 struct SettingsRows<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         content()
             .padding(.horizontal, Theme.Metric.rowInset)
             .padding(.vertical, Theme.Metric.Settings.rowSpacing)
             .frame(maxWidth: .infinity, alignment: .leading)
-    }
+    } }
 }
 
 // MARK: - pages, tabs and groups (Capture One's preferences, RFC-026)
@@ -690,9 +691,9 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 struct SettingsTabBar: View {
     @Binding var selection: SettingsPage
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 2) {
-            ForEach(SettingsPage.allCases) { page in
+            ForEach(SettingsPage.allCases) { page in WithPerceptionTracking {
                 let on = page == selection
                 Button { selection = page } label: {
                     VStack(spacing: 3) {
@@ -714,11 +715,11 @@ struct SettingsTabBar: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(on ? .isSelected : [])
-            }
+            } }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
-    }
+    } }
 }
 
 /// One group on a page: a small grey title, a hairline, and its rows. Not
@@ -733,7 +734,7 @@ struct SettingsGroup<Content: View>: View {
         self.content = content
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 Text(title)
@@ -746,5 +747,5 @@ struct SettingsGroup<Content: View>: View {
             .padding(.top, 4)
             content()
         }
-    }
+    } }
 }

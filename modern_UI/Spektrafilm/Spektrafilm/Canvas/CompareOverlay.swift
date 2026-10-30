@@ -12,15 +12,16 @@
 //  easier to write and useless the moment you zoom in on something.
 
 import SwiftUI
+import Perception
 
 struct CompareOverlay: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
     /// Radius of the drag handle, and the grab area, in view points.
     private static let handle: CGFloat = 15
 
-    var body: some View {
-        GeometryReader { geo in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { geo in WithPerceptionTracking {
             let v = session.viewportSnapshot
             if session.comparing, v.image.width > 1 {
                 let x = lineX(v)
@@ -57,12 +58,12 @@ struct CompareOverlay: View {
                 .contentShape(Rectangle())
                 .gesture(drag(in: v, width: geo.size.width))
             }
-        }
+        } }
         // Unlike the crop and mask overlays this one *does* take the mouse:
         // the handle is the control. The gesture is attached above rather
         // than here so the rest of the canvas keeps its pan.
         .allowsHitTesting(session.comparing)
-    }
+    } }
 
     /// Where "After" goes: its corner, unless the canvas's status badges are
     /// there too — which they are whenever the picture reaches the canvas's

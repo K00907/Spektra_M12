@@ -12,6 +12,7 @@
 //  is a defect this file exists to make impossible, not to fix again.
 
 import SwiftUI
+import Perception
 
 enum FrameFraming {
     /// Not picked, and not on the canvas.

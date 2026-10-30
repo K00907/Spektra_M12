@@ -68,7 +68,7 @@
 //  is `modern_UI/design/TOKENS-main-2026-09-17.md`.
 
 import AppKit
-import Observation
+import Perception
 import SwiftUI
 
 /// The user's interface type scale. This deliberately scales the typography
@@ -90,7 +90,7 @@ enum InterfaceScale: String, CaseIterable, Identifiable, Sendable {
 /// Observable and injectable for the same reason as `Localization`: changing
 /// the setting must repaint an already-open editor, while tests must not write
 /// into the process-wide defaults domain.
-@Observable
+@Perceptible
 final class InterfaceScaleStore: @unchecked Sendable {
     static let shared = InterfaceScaleStore()
     static let key = Session.uiKey + "interfaceScale"
@@ -1179,11 +1179,11 @@ struct Hairline: View {
     enum Tier { case section, region }
     var tier: Tier = .section
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Rectangle().fill(tier == .region ? Theme.ruleRegion : Theme.rule)
             .frame(height: Theme.Metric.rule)
             .frame(maxWidth: .infinity)
-    }
+    } }
 }
 
 /// The vertical member of the same wall.
@@ -1195,11 +1195,11 @@ struct Hairline: View {
 /// superseded. It stays an **overlay** at both call sites, so a line that is
 /// 1 pt wide does not make the three-column arithmetic 2 pt wrong.
 struct VerticalHairline: View {
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Rectangle().fill(Theme.ruleRegion)
             .frame(width: Theme.Metric.rule)
             .frame(maxHeight: .infinity)
-    }
+    } }
 }
 
 extension View {
@@ -1225,7 +1225,7 @@ extension View {
 private struct DisabledReason: ViewModifier {
     let show: Bool
     let reason: String
-    func body(content: Content) -> some View {
+    func body(content: Content) -> some View { WithPerceptionTracking {
         if show { content.help(reason) } else { content }
-    }
+    } }
 }

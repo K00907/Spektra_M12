@@ -48,16 +48,17 @@
 //  gallery view remains unchanged".
 
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct EditorWindow: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     /// Opening the export page's scene. A `Window` scene is addressed by its
     /// id from anywhere with the environment, which is how this window hands
     /// the request on without either of them owning the other.
     @Environment(\.openWindow) private var openWindow
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         // One layout. The window used to switch to a `BrowseView` worklist
         // whenever a folder was open and no frame chosen; that page is gone
         // and the filmstrip is the only list. Opening a folder still develops
@@ -101,7 +102,7 @@ struct EditorWindow: View {
             session.showExport = false
             openWindow(id: ExportWindowID.scene)
         }
-    }
+    } }
 
     /// The Print state: the four cards, exactly as drawn.
     ///
@@ -207,10 +208,10 @@ struct EditorWindow: View {
 /// The centre: the Metal view (or, in snapshot mode, an offscreen render of
 /// it) with the four collapse tabs on its edges.
 struct CanvasArea: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     @Environment(\.snapshotMode) private var snapshotMode
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack {
             if snapshotMode {
                 SnapshotCanvas(session: session)
@@ -316,7 +317,7 @@ struct CanvasArea: View {
                     .frame(maxWidth: 360, alignment: .leading)
             }
         }
-    }
+    } }
 
     /// Plain text, no capsule. The shadow is not a plate: it is what keeps a
     /// white word readable where the picture under the corner is white too.
@@ -339,7 +340,7 @@ struct CanvasArea: View {
 /// no mask in it, and the feature was fine. Anything the renderer considers a
 /// reason to redraw is now a reason to re-capture, with no list to maintain.
 struct SnapshotCanvas: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     @State private var image: CGImage?
     @State private var revision = 0
     @State private var rendering = false
@@ -350,16 +351,16 @@ struct SnapshotCanvas: View {
     /// was of a canvas that never drew, and of a zoom fitted to another view.
     @Environment(\.snapshotCapture) private var capture
 
-    var body: some View {
-        GeometryReader { geo in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { geo in WithPerceptionTracking {
             Group {
                 if let image { Image(decorative: image, scale: 2).resizable() } else { Theme.ground }
             }
             .onAppear { if capture { session.renderer.needsDraw = { revision &+= 1 } } }
             .onChange(of: geo.size, initial: true) { _, size in render(size) }
             .onChange(of: revision) { _, _ in render(geo.size) }
-        }
-    }
+        } }
+    } }
 
     private func render(_ size: CGSize) {
         guard capture, size.width > 1, size.height > 1 else { return }

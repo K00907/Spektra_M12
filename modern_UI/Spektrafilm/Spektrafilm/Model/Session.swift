@@ -24,11 +24,11 @@
 
 import AppKit
 import Foundation
-import Observation
+import Perception
 import SwiftUI
 
 @MainActor
-@Observable
+@Perceptible
 final class Session: CanvasHost {
     // MARK: library
     private(set) var frames: [Frame] = []
@@ -106,27 +106,27 @@ final class Session: CanvasHost {
     var pairLayer = PairLayer.film { didSet { if pairLayer != oldValue { pairLayerChanged() } } }
     /// The right hole's frame's EXIF: its date, for the strip's second imprint.
     private(set) var pairRightExif: EXIFReadout?
-    @ObservationIgnored private var pairExposureTask: Task<Void, Never>?
+    @PerceptionIgnored private var pairExposureTask: Task<Void, Never>?
     /// `openInService` calls in flight, and what `busy` was before the first.
-    @ObservationIgnored private var openDepth = 0
+    @PerceptionIgnored private var openDepth = 0
     /// The engine's last print of the pair and the generation it landed with:
     /// what a frame's print or grade is composed over again.
-    @ObservationIgnored private var pairLastRender: (outcome: RenderOutcome, generation: Int)?
-    @ObservationIgnored private var pairComposeTask: Task<Void, Never>?
+    @PerceptionIgnored private var pairLastRender: (outcome: RenderOutcome, generation: Int)?
+    @PerceptionIgnored private var pairComposeTask: Task<Void, Never>?
     /// Whether the canvas is showing a picture cut together from the frames'
     /// own prints (already graded), rather than the engine's one print.
-    @ObservationIgnored private var pairShowsComposite = false
-    @ObservationIgnored private var busyBeforeOpen = false
+    @PerceptionIgnored private var pairShowsComposite = false
+    @PerceptionIgnored private var busyBeforeOpen = false
     /// Placement mode on a pair, the drag in flight, and where the engine put
     /// the gates on the strip (normalised to the canvas).
     var pairPlacing = false
     /// The hole whose Add Frame picker is open on the canvas.
     var pairPicker: HalfFramePair.Side?
     private(set) var pairDrag: PairDrag?
-    @ObservationIgnored private var draggedFrameBox: URL?
+    @PerceptionIgnored private var draggedFrameBox: URL?
     /// The wheel's, the pinch's and a slider's change to a placement is one
     /// gesture: shown as it goes, written once it stops.
-    @ObservationIgnored private var pairPlacementTask: Task<Void, Never>?
+    @PerceptionIgnored private var pairPlacementTask: Task<Void, Never>?
     private(set) var pairGates: [CGRect] = []
     var params: FilmParams {
         get { sidecar.params }
@@ -706,7 +706,7 @@ final class Session: CanvasHost {
     /// The frame whose film canvas (the engine's own cut: a film edge, a date
     /// under a crop) is on the canvas. While that frame is decoded again its
     /// film stays up until the new print lands (`holdsFilmCanvas`).
-    @ObservationIgnored private var filmCanvasOn: URL?
+    @PerceptionIgnored private var filmCanvasOn: URL?
     /// The decode is not put over a film canvas that a develop is about to
     /// replace: it is the same frame without its film and of another shape,
     /// so for the length of a re-render the bare photograph stood where the
@@ -849,7 +849,7 @@ final class Session: CanvasHost {
     /// The Settings Clipboard section's seven boxes: which groups the *next*
     /// copy or sync takes. Persisted, and all seven by default, which is what ⇧⌘V
     /// copied before the groups existed.
-    @ObservationIgnored private let clipboardDefaults: UserDefaults
+    @PerceptionIgnored private let clipboardDefaults: UserDefaults
     var clipboardGroups: Set<ClipboardGroup> {
         didSet {
             clipboardDefaults.set(clipboardGroups.map(\.rawValue).sorted(),
@@ -941,7 +941,7 @@ final class Session: CanvasHost {
     /// Tests only: called after the develop's `open` delta is built and before
     /// it is sent, which is the one point where an edit lands on a session the
     /// engine is being handed without it (RFC-027 §5.1).
-    @ObservationIgnored var afterOpenDeltaForTesting: (() -> Void)?
+    @PerceptionIgnored var afterOpenDeltaForTesting: (() -> Void)?
     /// What each of RFC-015 §2.3's four intents would choose for the frame on
     /// screen, as the last develop's `solve` reported them.
     ///

@@ -2,6 +2,7 @@
 //  bins the renderer publishes after each Layer 2 pass.
 
 import SwiftUI
+import Perception
 
 struct HistogramPlot: View {
     /// 4 × 256 normalised bins: r, g, b, luma.
@@ -13,7 +14,7 @@ struct HistogramPlot: View {
     /// sits straight on the surround like the badges under it.
     var showGround = true
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Canvas { ctx, size in
             if showGrid {
                 var grid = Path()
@@ -52,5 +53,5 @@ struct HistogramPlot: View {
         }
         .background(showGround ? Theme.plot : .clear)
         .clipShape(RoundedRectangle(cornerRadius: 2))
-    }
+    } }
 }

@@ -18,6 +18,7 @@
 //  for. Two sliders is the smaller cost, and this one is thirty lines.
 
 import SwiftUI
+import Perception
 
 struct DetentSlider: View {
     /// The stop, not a fraction of the way between two of them.
@@ -62,7 +63,7 @@ struct DetentSlider: View {
         Self.nearest(to: x, width: width, range: range, knobWidth: knobWidth)
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: .leading) {
             Capsule()
                 .fill(Theme.dim)
@@ -72,12 +73,12 @@ struct DetentSlider: View {
             // The stops themselves. Without them a control that refuses to
             // sit where you put it reads as a fault; with them the positions
             // are the ones it can reach, and the count is legible at a glance.
-            ForEach(stops, id: \.self) { stop in
+            ForEach(stops, id: \.self) { stop in WithPerceptionTracking {
                 Capsule()
                     .fill(Theme.text.opacity(stop == value ? 0 : 0.25))
                     .frame(width: 1, height: metrics.trackHeight + 4)
                     .offset(x: position(stop) - 0.5)
-            }
+            } }
 
             RoundedRectangle(cornerRadius: Theme.Metric.knobRadius, style: .continuous)
                 .fill(Theme.knob)
@@ -92,5 +93,5 @@ struct DetentSlider: View {
         )
         .help(help ?? "")
         .accessibilityValue("\(value)")
-    }
+    } }
 }

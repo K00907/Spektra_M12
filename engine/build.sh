@@ -44,7 +44,7 @@ math_flags=(-fmetal-math-mode=safe -fmetal-math-fp32-functions=precise)
 # a metallib stamped for a newer macOS than the user's does not load -- the app
 # opens and cannot render. `check_metallib_target` below fails the build if the
 # stamp drifts.
-MACOS_MIN=15.0
+MACOS_MIN=12.0
 target_flags=(-mmacos-version-min="$MACOS_MIN")
 
 sources=()

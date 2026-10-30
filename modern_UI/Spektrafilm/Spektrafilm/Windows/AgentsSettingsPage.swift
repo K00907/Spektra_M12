@@ -9,6 +9,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct AgentsSettingsPage: View {
     @AppStorage(AgentAccess.key) private var enabled = false
@@ -16,7 +17,7 @@ struct AgentsSettingsPage: View {
     @State private var installError: String?
     @State private var copied: String?
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         SettingsGroup(L(.setAgentsAccess)) {
             SettingsRows {
                 VStack(alignment: .leading, spacing: 4) {
@@ -57,7 +58,7 @@ struct AgentsSettingsPage: View {
         SettingsGroup(L(.setAgentsTools)) {
             SettingsRows {
                 VStack(alignment: .leading, spacing: 3) {
-                    ForEach(AgentTools.all, id: \.name) { t in
+                    ForEach(AgentTools.all, id: \.name) { t in WithPerceptionTracking {
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text(t.name).font(.system(size: 10.5 * scale, design: .monospaced))
                                 .foregroundStyle(Theme.text)
@@ -65,11 +66,11 @@ struct AgentsSettingsPage: View {
                             Text(firstSentence(t.summary)).font(Theme.Font.caption).foregroundStyle(Theme.dim)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
-                    }
+                    } }
                 }
             }
         }
-    }
+    } }
 
     private var scale: CGFloat { InterfaceScaleStore.shared.scale.factor }
 

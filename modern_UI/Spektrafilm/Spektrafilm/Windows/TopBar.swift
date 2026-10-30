@@ -49,11 +49,12 @@
 //  one accent colour in the palette exists to be found without looking.
 
 import SwiftUI
+import Perception
 
 struct TopBar: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 0) {
             // The leading edge is either the bar's own padding or the room the
             // window buttons need — they are on this row whenever the left
@@ -135,7 +136,7 @@ struct TopBar: View {
         // The whole bar is a window drag surface behind its controls: with the
         // titlebar hidden this row *is* where a titlebar would be.
         .background(WindowDragHandle())
-    }
+    } }
 
     /// Process / Original: v3's two capsules, moved up from the Print section
     /// by v4. **No plate**: Process is an accent outline whenever it can run;
@@ -204,9 +205,9 @@ struct TopBar: View {
     private var zoomPill: some View {
         Menu {
             Button(L(.helpFit)) { session.zoomToFit() }
-            ForEach([0.25, 0.5, 1.0, 2.0, 4.0], id: \.self) { f in
+            ForEach([0.25, 0.5, 1.0, 2.0, 4.0], id: \.self) { f in WithPerceptionTracking {
                 Button("\(Int(f * 100)) %") { session.zoomTo(fraction: f) }
-            }
+            } }
         } label: {
             // zoomPercent is 0 until an image is on the canvas.
             //

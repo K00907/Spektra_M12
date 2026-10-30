@@ -33,6 +33,7 @@
 @preconcurrency import ColorSync
 import CoreGraphics
 import Foundation
+import Perception
 import ImageIO
 
 // Read once, at file scope, so the `@convention(c)` callback below — which
@@ -712,7 +713,7 @@ struct ExportRecipe: Codable, Identifiable, Hashable, Sendable {
 /// reports it, because losing the ability to export over a typo in a settings
 /// file would be the worse failure.
 @MainActor
-@Observable
+@Perceptible
 final class ExportRecipeStore {
     private(set) var recipes: [ExportRecipe]
     /// Set when the file could not be read or written, for the UI to show.

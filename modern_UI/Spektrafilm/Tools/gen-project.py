@@ -72,7 +72,17 @@ APP = "Spektrafilm"
 PRODUCT_NAME = "SpektraLab"
 TESTS = "SpektrafilmTests"
 BUNDLE_ID = "com.hanze.filmify"
-MACOS = "15.0"
+# Intel port (macOS 12 Monterey, x86_64): the upstream floor is macOS 15 on
+# Apple silicon. This branch builds for Intel Macs that stop at Monterey, so
+# the floor and the architecture move together with the Observation backport
+# (swift-perception, below) and the compatibility shims in `Compat/`.
+MACOS = "12.0"
+ARCHS = "x86_64"
+
+# swift-perception back-deploys `@Observable` to macOS 10.15 as `@Perceptible`.
+# Observation itself is macOS 14+, and every model in this app is observable.
+PERCEPTION_URL = "https://github.com/pointfreeco/swift-perception"
+PERCEPTION_VERSION = "2.0.9"
 
 # The version, in one place.
 #
@@ -228,7 +238,31 @@ def build() -> str:
     is_res = lambda q: q.suffix in (".xcassets", ".icon") or q.name == "Resources"
     app_sources = phase("PBXSourcesBuildPhase", app_files + engine_files, is_src, "app-sources")
     app_resources = phase("PBXResourcesBuildPhase", app_files, is_res, "app-resources")
-    app_frameworks = phase("PBXFrameworksBuildPhase", [], lambda q: False, "app-frameworks")
+    # The Perception package product, linked into both targets (the test
+    # target compiles the app's sources, so it needs the same module).
+    package_ref = uid("package:swift-perception")
+    p.add(package_ref, f"{{\n\t\t\tisa = XCRemoteSwiftPackageReference;\n\t\t\trepositoryURL = \"{PERCEPTION_URL}\";"
+                       f"\n\t\t\trequirement = {{\n\t\t\t\tkind = exactVersion;\n\t\t\t\tversion = {PERCEPTION_VERSION};\n\t\t\t}};\n\t\t}}",
+          'XCRemoteSwiftPackageReference "swift-perception"')
+
+    def package_product(tag: str) -> tuple[str, str]:
+        dep_id = uid(f"package-product:{tag}:Perception")
+        p.add(dep_id, f"{{\n\t\t\tisa = XCSwiftPackageProductDependency;\n\t\t\tpackage = {package_ref};"
+                      f"\n\t\t\tproductName = Perception;\n\t\t}}", "Perception")
+        build_id = uid(f"build:{tag}:package:Perception")
+        p.add(build_id, f"{{isa = PBXBuildFile; productRef = {dep_id}; }}", "Perception in Frameworks")
+        return dep_id, build_id
+
+    app_pkg_dep, app_pkg_build = package_product("app")
+    test_pkg_dep, test_pkg_build = package_product("tests")
+
+    def frameworks_phase(tag: str, build_id: str) -> str:
+        pid = uid(f"phase:{tag}:PBXFrameworksBuildPhase")
+        p.add(pid, f"{{\n\t\t\tisa = PBXFrameworksBuildPhase;\n\t\t\tbuildActionMask = 2147483647;\n\t\t\tfiles = (\n"
+                   f"\t\t\t\t{build_id} /* Perception in Frameworks */\n\t\t\t);\n\t\t\trunOnlyForDeploymentPostprocessing = 0;\n\t\t}}", tag)
+        return pid
+
+    app_frameworks = frameworks_phase("app-frameworks", app_pkg_build)
     # The test bundle is standalone (no TEST_HOST): it compiles every app
     # source except the @main file, so the tests run without launching the
     # app and without the test-host injection that crashed SwiftUI's
@@ -237,7 +271,7 @@ def build() -> str:
               if is_src(path) and path.name != "SpektrafilmApp.swift"]
     test_sources = phase("PBXSourcesBuildPhase", test_files + shared, is_src, "test-sources")
     test_resources = phase("PBXResourcesBuildPhase", test_files + [(fid, path) for fid, path in app_files if is_res(path)], is_res, "test-resources")
-    test_frameworks = phase("PBXFrameworksBuildPhase", [], lambda q: False, "test-frameworks")
+    test_frameworks = frameworks_phase("test-frameworks", test_pkg_build)
 
     # The engine's build settings. `MTL_FAST_MATH` stays YES for the app's own
     # canvas shader; the engine's kernels never go through Xcode's metal
@@ -270,8 +304,8 @@ def build() -> str:
         "SWIFT_STRICT_CONCURRENCY": "complete",
         "MACOSX_DEPLOYMENT_TARGET": MACOS,
         "SDKROOT": "macosx",
-        "ARCHS": "arm64",
-        "ONLY_ACTIVE_ARCH": "YES",
+        "ARCHS": ARCHS,
+        "ONLY_ACTIVE_ARCH": "NO",
         "CODE_SIGN_STYLE": "Manual" if TEAM_ID else "Automatic",
         "CODE_SIGN_IDENTITY": f'"{SIGN_IDENTITY}"',
         "DEVELOPMENT_TEAM": f'"{TEAM_ID}"',
@@ -357,14 +391,14 @@ def build() -> str:
     p.add(proxy, f"{{\n\t\t\tisa = PBXContainerItemProxy;\n\t\t\tcontainerPortal = {project};\n\t\t\tproxyType = 1;\n\t\t\tremoteGlobalIDString = {app_target};\n\t\t\tremoteInfo = {APP};\n\t\t}}")
     p.add(dep, f"{{\n\t\t\tisa = PBXTargetDependency;\n\t\t\ttarget = {app_target};\n\t\t\ttargetProxy = {proxy};\n\t\t}}")
 
-    p.add(app_target, f"{{\n\t\t\tisa = PBXNativeTarget;\n\t\t\tbuildConfigurationList = {cfg_list('app', app_cfg)};\n\t\t\tbuildPhases = (\n\t\t\t\t{check_script},\n\t\t\t\t{app_sources},\n\t\t\t\t{app_frameworks},\n\t\t\t\t{app_resources}\n\t\t\t);\n\t\t\tbuildRules = (\n\t\t\t);\n\t\t\tdependencies = (\n\t\t\t);\n\t\t\tname = {APP};\n\t\t\tproductName = {APP};\n\t\t\tproductReference = {app_product};\n\t\t\tproductType = \"com.apple.product-type.application\";\n\t\t}}", APP)
-    p.add(test_target, f"{{\n\t\t\tisa = PBXNativeTarget;\n\t\t\tbuildConfigurationList = {cfg_list('tests', test_cfg)};\n\t\t\tbuildPhases = (\n\t\t\t\t{test_sources},\n\t\t\t\t{test_frameworks},\n\t\t\t\t{test_resources}\n\t\t\t);\n\t\t\tbuildRules = (\n\t\t\t);\n\t\t\tdependencies = (\n\t\t\t);\n\t\t\tname = {TESTS};\n\t\t\tproductName = {TESTS};\n\t\t\tproductReference = {test_product};\n\t\t\tproductType = \"com.apple.product-type.bundle.unit-test\";\n\t\t}}", TESTS)
+    p.add(app_target, f"{{\n\t\t\tisa = PBXNativeTarget;\n\t\t\tbuildConfigurationList = {cfg_list('app', app_cfg)};\n\t\t\tbuildPhases = (\n\t\t\t\t{check_script},\n\t\t\t\t{app_sources},\n\t\t\t\t{app_frameworks},\n\t\t\t\t{app_resources}\n\t\t\t);\n\t\t\tbuildRules = (\n\t\t\t);\n\t\t\tdependencies = (\n\t\t\t);\n\t\t\tname = {APP};\n\t\t\tpackageProductDependencies = (\n\t\t\t\t{app_pkg_dep} /* Perception */\n\t\t\t);\n\t\t\tproductName = {APP};\n\t\t\tproductReference = {app_product};\n\t\t\tproductType = \"com.apple.product-type.application\";\n\t\t}}", APP)
+    p.add(test_target, f"{{\n\t\t\tisa = PBXNativeTarget;\n\t\t\tbuildConfigurationList = {cfg_list('tests', test_cfg)};\n\t\t\tbuildPhases = (\n\t\t\t\t{test_sources},\n\t\t\t\t{test_frameworks},\n\t\t\t\t{test_resources}\n\t\t\t);\n\t\t\tbuildRules = (\n\t\t\t);\n\t\t\tdependencies = (\n\t\t\t);\n\t\t\tname = {TESTS};\n\t\t\tpackageProductDependencies = (\n\t\t\t\t{test_pkg_dep} /* Perception */\n\t\t\t);\n\t\t\tproductName = {TESTS};\n\t\t\tproductReference = {test_product};\n\t\t\tproductType = \"com.apple.product-type.bundle.unit-test\";\n\t\t}}", TESTS)
 
     proj_cfg = cfg_list("project", {"SWIFT_VERSION": "6.0", "MACOSX_DEPLOYMENT_TARGET": MACOS,
                                     "SDKROOT": "macosx", "ALWAYS_SEARCH_USER_PATHS": "NO",
                                     "CLANG_ENABLE_OBJC_ARC": "YES", "ENABLE_STRICT_OBJC_MSGSEND": "YES",
                                     "GCC_NO_COMMON_BLOCKS": "YES", "ENABLE_USER_SCRIPT_SANDBOXING": "NO"})
-    p.add(project, f"{{\n\t\t\tisa = PBXProject;\n\t\t\tattributes = {{\n\t\t\t\tBuildIndependentTargetsInParallel = 1;\n\t\t\t\tLastSwiftUpdateCheck = 1600;\n\t\t\t\tLastUpgradeCheck = 1600;\n\t\t\t\tTargetAttributes = {{\n\t\t\t\t\t{test_target} = {{\n\t\t\t\t\t\tTestTargetID = {app_target};\n\t\t\t\t\t}};\n\t\t\t\t}};\n\t\t\t}};\n\t\t\tbuildConfigurationList = {proj_cfg};\n\t\t\tcompatibilityVersion = \"Xcode 14.0\";\n\t\t\tdevelopmentRegion = en;\n\t\t\thasScannedForEncodings = 0;\n\t\t\tknownRegions = (\n\t\t\t\ten,\n\t\t\t\tBase\n\t\t\t);\n\t\t\tmainGroup = {main_group};\n\t\t\tproductRefGroup = {products};\n\t\t\tprojectDirPath = \"\";\n\t\t\tprojectRoot = \"\";\n\t\t\ttargets = (\n\t\t\t\t{app_target},\n\t\t\t\t{test_target}\n\t\t\t);\n\t\t}}", "Project object")
+    p.add(project, f"{{\n\t\t\tisa = PBXProject;\n\t\t\tattributes = {{\n\t\t\t\tBuildIndependentTargetsInParallel = 1;\n\t\t\t\tLastSwiftUpdateCheck = 1600;\n\t\t\t\tLastUpgradeCheck = 1600;\n\t\t\t\tTargetAttributes = {{\n\t\t\t\t\t{test_target} = {{\n\t\t\t\t\t\tTestTargetID = {app_target};\n\t\t\t\t\t}};\n\t\t\t\t}};\n\t\t\t}};\n\t\t\tbuildConfigurationList = {proj_cfg};\n\t\t\tcompatibilityVersion = \"Xcode 14.0\";\n\t\t\tdevelopmentRegion = en;\n\t\t\thasScannedForEncodings = 0;\n\t\t\tknownRegions = (\n\t\t\t\ten,\n\t\t\t\tBase\n\t\t\t);\n\t\t\tmainGroup = {main_group};\n\t\t\tpackageReferences = (\n\t\t\t\t{package_ref} /* XCRemoteSwiftPackageReference \"swift-perception\" */\n\t\t\t);\n\t\t\tproductRefGroup = {products};\n\t\t\tprojectDirPath = \"\";\n\t\t\tprojectRoot = \"\";\n\t\t\ttargets = (\n\t\t\t\t{app_target},\n\t\t\t\t{test_target}\n\t\t\t);\n\t\t}}", "Project object")
 
     body = "\n".join(p.objects)
     return f"// !$*UTF8*$!\n{{\n\tarchiveVersion = 1;\n\tclasses = {{\n\t}};\n\tobjectVersion = 56;\n\tobjects = {{\n{body}\n\t}};\n\trootObject = {project} /* Project object */;\n}}\n"

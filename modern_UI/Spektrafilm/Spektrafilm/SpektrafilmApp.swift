@@ -9,6 +9,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 /// Three front doors on one binary (RFC-026 §2). `cli …` and `mcp` never
 /// create an `NSApplication`, so an agent's call opens no window and puts no

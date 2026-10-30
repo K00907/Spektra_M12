@@ -11,9 +11,10 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct CurveEditor: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     @State private var channel: CurveChannel = .rgb
     @State private var dragging: Int? = nil
     @State private var hover: CGPoint? = nil
@@ -27,18 +28,18 @@ struct CurveEditor: View {
         session.adjustments = a
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 6) {
             tabs
             plot
                 .aspectRatio(1.05, contentMode: .fit)
             readout
         }
-    }
+    } }
 
     private var tabs: some View {
         HStack(spacing: 0) {
-            ForEach(CurveChannel.allCases) { ch in
+            ForEach(CurveChannel.allCases) { ch in WithPerceptionTracking {
                 let on = ch == channel
                 Button { channel = ch } label: {
                     VStack(spacing: 4) {
@@ -54,12 +55,12 @@ struct CurveEditor: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-            }
+            } }
         }
     }
 
     private var plot: some View {
-        GeometryReader { geo in
+        GeometryReader { geo in WithPerceptionTracking {
             let size = geo.size
             ZStack {
                 HistogramPlot(bins: session.histogram, channels: [channel], showGrid: true, lineWidth: 1)
@@ -132,7 +133,7 @@ struct CurveEditor: View {
                 case .ended: hover = nil
                 }
             }
-        }
+        } }
     }
 
     private var curveColor: Color {

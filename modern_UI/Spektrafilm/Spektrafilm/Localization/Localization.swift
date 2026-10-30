@@ -21,7 +21,7 @@
 //  what is translated and, just as much, for what is deliberately not.
 
 import Foundation
-import Observation
+import Perception
 
 /// A language this app has copy for.
 ///
@@ -77,7 +77,7 @@ enum LanguageSetting: String, CaseIterable, Sendable {
 /// would look right, and would leave every label in the window in the old
 /// language until something else happened to invalidate it.
 @MainActor
-@Observable
+@Perceptible
 final class Localization {
     static let shared = Localization()
 

@@ -12,12 +12,13 @@
 //  bug this arrangement exists to avoid.
 
 import SwiftUI
+import Perception
 
 struct CropOverlay: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
-    var body: some View {
-        GeometryReader { geo in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { geo in WithPerceptionTracking {
             let v = session.viewportSnapshot
             let size = session.sourceImageSize
             let g = session.geometry
@@ -31,9 +32,9 @@ struct CropOverlay: View {
                 }
                 .compositingGroup()
             }
-        }
+        } }
         .allowsHitTesting(false)
-    }
+    } }
 
     /// Source-normalised → view points, **through E**.
     ///
@@ -90,7 +91,7 @@ struct CropOverlay: View {
     /// straighten angle is, so a bar along an edge is simply a bar.
     private func grips(_ g: Geometry, _ size: CGSize, _ v: ViewportState) -> some View {
         ZStack {
-            ForEach(CropHandle.allCases.filter { $0 != .body }, id: \.rawValue) { h in
+            ForEach(CropHandle.allCases.filter { $0 != .body }, id: \.rawValue) { h in WithPerceptionTracking {
                 let pos = h.position
                 let n = g.rotated(CGPoint(x: g.crop.x + g.crop.width * pos.x,
                                           y: g.crop.y + g.crop.height * pos.y), in: size)
@@ -103,7 +104,7 @@ struct CropOverlay: View {
                            height: h.isCorner ? 11 : (h.movesLeading || h.movesTrailing ? 22 : 4))
                     .shadow(color: .black.opacity(0.5), radius: 1)
                     .position(p)
-            }
+            } }
         }
     }
 

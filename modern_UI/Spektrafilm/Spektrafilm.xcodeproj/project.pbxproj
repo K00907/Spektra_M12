@@ -863,11 +863,31 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DE82835A2EB51BCE2BF3B6BE /* XCRemoteSwiftPackageReference "swift-perception" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-perception";
+			requirement = {
+				kind = exactVersion;
+				version = 2.0.9;
+			};
+		};
+		065C27862ADD57848ECC1EAA /* Perception */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DE82835A2EB51BCE2BF3B6BE;
+			productName = Perception;
+		};
+		599A70CE3FDD15E83BEC6685 /* Perception in Frameworks */ = {isa = PBXBuildFile; productRef = 065C27862ADD57848ECC1EAA; };
+		4A380F703BDE39EE11F02F5A /* Perception */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DE82835A2EB51BCE2BF3B6BE;
+			productName = Perception;
+		};
+		2C7447C272D580933967BBA4 /* Perception in Frameworks */ = {isa = PBXBuildFile; productRef = 4A380F703BDE39EE11F02F5A; };
 		AA9A663971E63899B42E7E70 /* app-frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-
+				599A70CE3FDD15E83BEC6685 /* Perception in Frameworks */
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1273,7 +1293,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-
+				2C7447C272D580933967BBA4 /* Perception in Frameworks */
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1306,7 +1326,7 @@
 		967DE5DAE8F9C3546488D3FD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = arm64;
+				ARCHS = x86_64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = SpektraLab;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
@@ -1334,11 +1354,11 @@
 				);
 				INFOPLIST_FILE = Spektrafilm/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MARKETING_VERSION = 1.3.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "-framework Metal -framework QuartzCore -framework CoreText -framework CoreGraphics -framework Accelerate";
 				PRODUCT_BUNDLE_IDENTIFIER = com.hanze.filmify;
 				PRODUCT_NAME = SpektraLab;
@@ -1355,7 +1375,7 @@
 		70A5F3AAC43D0790B57ED51A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = arm64;
+				ARCHS = x86_64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = SpektraLab;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
@@ -1381,11 +1401,11 @@
 				);
 				INFOPLIST_FILE = Spektrafilm/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MARKETING_VERSION = 1.3.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "-framework Metal -framework QuartzCore -framework CoreText -framework CoreGraphics -framework Accelerate";
 				PRODUCT_BUNDLE_IDENTIFIER = com.hanze.filmify;
 				PRODUCT_NAME = SpektraLab;
@@ -1422,6 +1442,9 @@
 			dependencies = (
 			);
 			name = Spektrafilm;
+			packageProductDependencies = (
+				065C27862ADD57848ECC1EAA /* Perception */
+			);
 			productName = Spektrafilm;
 			productReference = B6CDB6E5D160E013280D3C68;
 			productType = "com.apple.product-type.application";
@@ -1429,7 +1452,7 @@
 		7A6254D73776E919A898BF59 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = arm64;
+				ARCHS = x86_64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = SpektraLab;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
@@ -1454,11 +1477,11 @@
 					"$(SRCROOT)/../../engine/third_party/metal-cpp",
 				);
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MARKETING_VERSION = 1.3.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "-framework Metal -framework QuartzCore -framework CoreText -framework CoreGraphics -framework Accelerate";
 				PRODUCT_BUNDLE_IDENTIFIER = com.hanze.filmify.tests;
 				PRODUCT_NAME = SpektrafilmTests;
@@ -1475,7 +1498,7 @@
 		7EB3E2C335E8159349623C2B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = arm64;
+				ARCHS = x86_64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = SpektraLab;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
@@ -1498,11 +1521,11 @@
 					"$(SRCROOT)/../../engine/third_party/metal-cpp",
 				);
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MARKETING_VERSION = 1.3.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "-framework Metal -framework QuartzCore -framework CoreText -framework CoreGraphics -framework Accelerate";
 				PRODUCT_BUNDLE_IDENTIFIER = com.hanze.filmify.tests;
 				PRODUCT_NAME = SpektrafilmTests;
@@ -1538,6 +1561,9 @@
 			dependencies = (
 			);
 			name = SpektrafilmTests;
+			packageProductDependencies = (
+				4A380F703BDE39EE11F02F5A /* Perception */
+			);
 			productName = SpektrafilmTests;
 			productReference = E02A90D9643568EA39115CFB;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -1553,7 +1579,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 2;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -1570,7 +1596,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
@@ -1608,6 +1634,9 @@
 				Base
 			);
 			mainGroup = ADCF10F76EBF2A74473E9DC4;
+			packageReferences = (
+				DE82835A2EB51BCE2BF3B6BE /* XCRemoteSwiftPackageReference "swift-perception" */
+			);
 			productRefGroup = 00C45FD35CB0F9C5F764F070;
 			projectDirPath = "";
 			projectRoot = "";

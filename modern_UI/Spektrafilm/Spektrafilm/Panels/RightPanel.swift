@@ -20,6 +20,7 @@
 //  the name and, under it, the switch between the two tabs (1.2.2).
 
 import SwiftUI
+import Perception
 
 enum ParametersTab: String, CaseIterable, Identifiable {
     case preDev, postDev
@@ -28,7 +29,7 @@ enum ParametersTab: String, CaseIterable, Identifiable {
 }
 
 struct RightPanel: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     @AppStorage(Session.uiKey + "parametersTab") private var tabRaw = ParametersTab.preDev.rawValue
     private var tab: ParametersTab { ParametersTab(rawValue: tabRaw) ?? .preDev }
 
@@ -59,7 +60,7 @@ struct RightPanel: View {
         return s
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             header
             Hairline()
@@ -68,16 +69,16 @@ struct RightPanel: View {
                     let sections = sections
                     // Between sections, never after the last, and each one a
                     // handle on the section above it.
-                    ForEach(Array(sections.enumerated()), id: \.element.0) { index, entry in
+                    ForEach(Array(sections.enumerated()), id: \.element.0) { index, entry in WithPerceptionTracking {
                         if index > 0 { SectionDivider(above: sections[index - 1].0) }
                         entry.1
-                    }
+                    } }
                 }
             }
         }
         .environment(\.railSliderMetrics, .parameters)
         .railCard()
-    }
+    } }
 
     /// The rail's name, and under it the Pre-Dev / Post-Dev switch (1.2.2).
     ///

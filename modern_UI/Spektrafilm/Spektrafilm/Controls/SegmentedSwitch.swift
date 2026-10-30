@@ -14,6 +14,7 @@
 //  plate of its own inside even a `.plain` button (the stock lists' trap).
 
 import SwiftUI
+import Perception
 
 struct SegmentedSwitch<Option: Hashable & Identifiable>: View {
     let options: [Option]
@@ -35,9 +36,9 @@ struct SegmentedSwitch<Option: Hashable & Identifiable>: View {
     private var thumbHeight: CGFloat { max(18, Theme.lineHeight(size: 10.5) + 4) }
     static var inset: CGFloat { 2 }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 0) {
-            ForEach(options) { option in
+            ForEach(options) { option in WithPerceptionTracking {
                 let on = option == selection
                 HStack(spacing: 4) {
                     Text(title(option))
@@ -65,9 +66,9 @@ struct SegmentedSwitch<Option: Hashable & Identifiable>: View {
                 .rowEnabled(enabled(option), because: reason(option))
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
-            }
+            } }
         }
         .padding(Self.inset)
         .background(Capsule().fill(Theme.plot))
-    }
+    } }
 }

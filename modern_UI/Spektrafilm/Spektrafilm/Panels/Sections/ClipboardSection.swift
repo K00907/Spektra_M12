@@ -10,14 +10,15 @@
 //  the metadata ink, and the Navigator's pill.
 
 import SwiftUI
+import Perception
 
 struct ClipboardSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionClipboard), key: "clipboard", initiallyExpanded: false) {
             RailRows {
-                ForEach(ClipboardGroup.offered) { group in
+                ForEach(ClipboardGroup.offered) { group in WithPerceptionTracking {
                     ToggleRow(label: group.title,
                               isOn: Binding(get: { session.clipboardGroups.contains(group) },
                                             set: { on in
@@ -25,7 +26,7 @@ struct ClipboardSection: View {
                                                 else { session.clipboardGroups.remove(group) }
                                             }),
                               help: group.help)
-                }
+                } }
                 Text(holds)
                     .font(Theme.Font.meta)
                     .foregroundStyle(Theme.Ink.tertiary)
@@ -49,7 +50,7 @@ struct ClipboardSection: View {
                 }
             }
         }
-    }
+    } }
 
     private var holds: String {
         guard let clip = session.clipboard else { return L(.clipEmpty) }

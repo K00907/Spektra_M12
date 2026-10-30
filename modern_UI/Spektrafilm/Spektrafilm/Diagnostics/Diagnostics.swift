@@ -25,10 +25,10 @@
 import AppKit
 import Foundation
 import Metal
-import Observation
+import Perception
 
 @MainActor
-@Observable
+@Perceptible
 final class Diagnostics {
     static let shared = Diagnostics(sampler: MemorySampler(arena: .shared))
 

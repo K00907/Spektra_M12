@@ -7,6 +7,7 @@
 //  their tracks on the same line as Film Exposure.
 
 import SwiftUI
+import Perception
 
 // MARK: - Film Format
 
@@ -20,7 +21,7 @@ import SwiftUI
 /// `Session.filmFormatMM(side:sideLengthMM:aspect:)` derives the long edge.
 /// Side Length is greyed unless the type is Custom.
 struct FilmFormatSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     @AppStorage(Session.uiKey + "sideUnit") private var unitRaw = SideUnit.mm.rawValue
     @AppStorage(Session.decoupleEffectsKey) private var decoupleEffects = false
 
@@ -30,7 +31,7 @@ struct FilmFormatSection: View {
     private var isCustom: Bool { session.params.filmFrame == FilmFrame.custom.id }
     private var width: CGFloat { Theme.Metric.parameterLabelWidth }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.filmFormat), key: "filmFormat",
                      action: SectionAction(help: L(.helpResetFilmFormat)) { reset() },
                      menu: { AnyView(menu) }) {
@@ -56,7 +57,7 @@ struct FilmFormatSection: View {
                 if decoupleEffects { decoupled } else { coupled }
             }
         }
-    }
+    } }
 
     /// **While Film Edge is on the frame is its gate**: the engine sizes the
     /// film from the gate's long edge, so this rail's frame is overridden and
@@ -231,14 +232,14 @@ struct FilmFormatSection: View {
 /// says why (1.3.2 — it used to commit nothing and return to the last
 /// accepted value on release, which read as a slider that would not move).
 struct ScenePlacementSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
     static let range = Session.placementRange
 
     private var developed: Bool { session.latitude.reply != nil && session.latitude.frame == session.selection }
     private var committed: SceneLatitudeSettings { session.params.sceneLatitude }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionScenePlacement), key: "scenePlacement",
                      action: SectionAction(help: L(.helpResetPlacement),
                                            enabled: session.params.sceneLatitude.active) {
@@ -258,7 +259,7 @@ struct ScenePlacementSection: View {
                         because: session.digitalIntermediateActive ? L(.reasonPlacementInDigitalIntermediate)
                                                                    : L(.reasonNotDeveloped))
         }
-    }
+    } }
 
     /// A slider step is solved and committed in the call that makes it
     /// (`Session.placeScene`), so the row shows what is committed and nothing
@@ -291,7 +292,7 @@ struct ScenePlacementSection: View {
 /// A print edit: it reprints the cached negative. Greyed with the reason while
 /// Print Effects is off, because the wire does not carry it then.
 struct ToneMaskSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
     private var mask: ContrastMaskSettings { session.params.contrastMask }
     private var allowed: Bool { session.params.printEffects && !session.digitalIntermediateActive }
@@ -299,7 +300,7 @@ struct ToneMaskSection: View {
         session.digitalIntermediateActive ? L(.reasonDisabledInDigitalIntermediate) : L(.reasonPrintEffectsOff)
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionToneMask), key: "toneMask",
                      action: SectionAction(help: L(.helpResetToneMask),
                                            enabled: mask != ContrastMaskSettings()) {
@@ -335,7 +336,7 @@ struct ToneMaskSection: View {
                             because: allowed ? "" : reason)
             }
         }
-    }
+    } }
 
     private func bind<V>(_ kp: WritableKeyPath<ContrastMaskSettings, V>) -> Binding<V> {
         Binding(get: { session.params.contrastMask[keyPath: kp] },
@@ -350,7 +351,7 @@ struct ToneMaskPlot: View {
     static let x: ClosedRange<Double> = -6...6
     static let y: ClosedRange<Double> = -3...3
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Canvas { ctx, size in
             func px(_ v: Double) -> CGFloat { CGFloat((v - Self.x.lowerBound) / (Self.x.upperBound - Self.x.lowerBound)) * size.width }
             func py(_ v: Double) -> CGFloat { CGFloat((Self.y.upperBound - v) / (Self.y.upperBound - Self.y.lowerBound)) * size.height }
@@ -370,5 +371,5 @@ struct ToneMaskPlot: View {
             }
             ctx.stroke(curve, with: .color(Theme.text), style: StrokeStyle(lineWidth: 1.2, lineJoin: .round))
         }
-    }
+    } }
 }

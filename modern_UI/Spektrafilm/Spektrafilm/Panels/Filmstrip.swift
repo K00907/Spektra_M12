@@ -17,18 +17,19 @@
 
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct Filmstrip: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 0) {
             edgeButton("chevron.left") { session.selectRelative(-1) }
-            ScrollViewReader { proxy in
+            ScrollViewReader { proxy in WithPerceptionTracking {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 14) {
-                        ForEach(session.frames) { frame in
+                        ForEach(session.frames) { frame in WithPerceptionTracking {
                             FilmstripCell(frame: frame,
                                           geometry: session.thumbnailGeometry(for: frame.id),
                                           framing: session.framing(of: frame.id),
@@ -67,7 +68,7 @@ struct Filmstrip: View {
                                         else { Sidecar.remove(for: frame.id); session.refreshState(for: frame.id) }
                                     }
                                 }
-                        }
+                        } }
                     }
                     .padding(.horizontal, 10)
                     .frame(height: Theme.Metric.filmstripHeight)
@@ -75,7 +76,7 @@ struct Filmstrip: View {
                 .onChange(of: session.selection) { _, new in
                     if let new { withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(new, anchor: .center) } }
                 }
-            }
+            } }
             edgeButton("chevron.right") { session.selectRelative(1) }
         }
         .overlay(alignment: .center) {
@@ -91,7 +92,7 @@ struct Filmstrip: View {
                 .allowsHitTesting(false)
         }
         .railCard()
-    }
+    } }
 
     private func edgeButton(_ name: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -144,12 +145,12 @@ struct FilmstripCell: View {
     let framing: FrameFraming
     /// Unread by this cell; kept as the guard test's construction seam.
     let state: FrameState
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         CropMaskedThumbnail(url: frame.id, geometry: geometry) { image in
             cell(image)
         }
         .help(frame.name)
-    }
+    } }
 
     private func cell(_ image: CGImage?) -> some View {
         ZStack {

@@ -19,9 +19,10 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct ColorBalanceEditor: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     @State private var tab: Tab = .master
     /// The width the wheels are sized against: what the right panel gives a
     /// control inside a well (286 less the well's inset and padding on both
@@ -81,7 +82,7 @@ struct ColorBalanceEditor: View {
         }
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 8) {
             tabs
             if let keyPath = tab.keyPath {
@@ -91,7 +92,7 @@ struct ColorBalanceEditor: View {
             }
         }
         .frame(maxWidth: .infinity)
-    }
+    } }
 
     /// The tab row: five zones, the active one underlined in the accent — the
     /// arrangement the reference leads with, and the part our two-tab version
@@ -100,7 +101,7 @@ struct ColorBalanceEditor: View {
     /// their natural widths.
     private var tabs: some View {
         HStack(spacing: 0) {
-            ForEach(Tab.allCases) { t in
+            ForEach(Tab.allCases) { t in WithPerceptionTracking {
                 let on = t == tab
                 Button { tab = t } label: {
                     VStack(spacing: 4) {
@@ -128,7 +129,7 @@ struct ColorBalanceEditor: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-            }
+            } }
         }
     }
 
@@ -166,7 +167,7 @@ struct ZoneWheel: View {
     /// The three-way layout's lower wheels label above rather than below.
     var labelFirst = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 4) {
             if labelFirst { labelText }
             // Concentric, not side by side: the arcs hug the rim, so their ends
@@ -188,7 +189,7 @@ struct ZoneWheel: View {
             if !labelFirst { labelText }
         }
         .frame(maxWidth: .infinity)
-    }
+    } }
 
     @ViewBuilder private var labelText: some View {
         if let label {
@@ -263,7 +264,7 @@ struct ArcSlider: View {
     private static let weight = ColorBalanceLayout.arcWeight
     private var thumbLength: CGFloat { ColorBalanceLayout.thumb(wheel) }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Canvas { ctx, size in
             let c = CGPoint(x: size.width / 2, y: size.height / 2)
             let r = wheel / 2 + gap
@@ -301,7 +302,7 @@ struct ArcSlider: View {
             value = value(at: g.location, centre: CGPoint(x: bandWidth / 2, y: bandWidth / 2))
         })
         .simultaneousGesture(TapGesture(count: 2).onEnded { value = neutral })
-    }
+    } }
 
     private var bandWidth: CGFloat { ColorBalanceLayout.band(wheel) }
 

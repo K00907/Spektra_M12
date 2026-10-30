@@ -47,6 +47,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 /// Attach to any view that is in the window for as long as the window is —
 /// the coordinates it places the buttons at are the window's, not the host

@@ -31,6 +31,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct CollapseTab: View {
     enum Edge { case leading, trailing, top, bottom }
@@ -65,7 +66,7 @@ struct CollapseTab: View {
         }
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button { withAnimation(.easeOut(duration: 0.18)) { collapsed.toggle() } } label: {
             Image(systemName: glyph)
                 .font(.system(size: 8, weight: .bold))
@@ -77,7 +78,7 @@ struct CollapseTab: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-    }
+    } }
 }
 
 /// A collapse tab that is only there when the pointer is: an invisible band
@@ -147,7 +148,7 @@ struct HoverEdgeTab: View {
                                          : Theme.Metric.tabThickness / 2)
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ZStack(alignment: pillAlignment) {
             // The **band** moves outward; the pill does not. The pill's place
             // is part of the interface (flush with the canvas edge, where the
@@ -168,7 +169,7 @@ struct HoverEdgeTab: View {
         .frame(width: vertical ? Self.band : nil, height: vertical ? nil : Self.band)
         .frame(maxWidth: vertical ? nil : .infinity, maxHeight: vertical ? .infinity : nil)
         .animation(.easeOut(duration: 0.18), value: revealed)
-    }
+    } }
 
     private func toggle() {
         withAnimation(.easeOut(duration: 0.18)) { collapsed.toggle() }

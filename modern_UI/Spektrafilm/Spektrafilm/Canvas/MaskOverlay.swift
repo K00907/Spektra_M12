@@ -15,6 +15,7 @@
 //  the two agree by both asking `Session.maskHandles` where the grips are.
 
 import SwiftUI
+import Perception
 
 /// One draggable grip on a mask's geometry, in source-normalised coordinates.
 struct MaskHandle: Equatable, Sendable, Identifiable {
@@ -26,28 +27,28 @@ struct MaskHandle: Equatable, Sendable, Identifiable {
 }
 
 struct MaskOverlay: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
-    var body: some View {
-        GeometryReader { _ in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { _ in WithPerceptionTracking {
             let v = session.viewportSnapshot
             let size = session.sourceImageSize
             if size.width > 1, v.image.width > 1, let mask = session.selectedMask, mask.enabled {
                 ZStack {
-                    ForEach(mask.components) { c in
+                    ForEach(mask.components) { c in WithPerceptionTracking {
                         switch c.kind {
                         case .linearGradient: linear(c, size, v)
                         case .radialGradient: radial(c, size, v)
                         default: EmptyView()
                         }
-                    }
+                    } }
                     grips(v, size)
                 }
                 .compositingGroup()
             }
-        }
+        } }
         .allowsHitTesting(false)
-    }
+    } }
 
     /// Source-normalised → view points, through the crop.
     private func view(_ n: CGPoint, _ v: ViewportState, _ size: CGSize) -> CGPoint {
@@ -109,14 +110,14 @@ struct MaskOverlay: View {
     }
 
     private func grips(_ v: ViewportState, _ size: CGSize) -> some View {
-        ForEach(session.maskHandles) { h in
+        ForEach(session.maskHandles) { h in WithPerceptionTracking {
             Circle()
                 .fill(Theme.selectionFrame)
                 .overlay(Circle().strokeBorder(.black.opacity(0.4), lineWidth: 0.5))
                 .frame(width: h.role == .centre ? 9 : 7, height: h.role == .centre ? 9 : 7)
                 .shadow(color: .black.opacity(0.5), radius: 1)
                 .position(view(h.position, v, size))
-        }
+        } }
     }
 }
 

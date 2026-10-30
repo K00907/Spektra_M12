@@ -42,13 +42,14 @@
 //  asked the implementation session to make is the one recorded here.
 
 import SwiftUI
+import Perception
 
 struct PrintProfileSection: View {
     /// Rows of the print list on screen before it scrolls, at the section's
     /// own height: v4 shows eight papers.
     static let wellRows = 8
 
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
     /// The sentinel `StockList` row id for "No Print Profile". It is not a
     /// paper, so it cannot be a `print_stock` value — see `FilmParams.scanFilm`
@@ -113,7 +114,7 @@ struct PrintProfileSection: View {
         return out
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionPrint), key: "print", menu: { AnyView(menu) }) {
             VStack(alignment: .leading, spacing: 0) {
                 StockList(rows: rows,
@@ -179,7 +180,7 @@ struct PrintProfileSection: View {
                 .padding(.top, Theme.Metric.rowSpacing + 5)
             }
         }
-    }
+    } }
 
     private func param(_ keyPath: WritableKeyPath<FilmParams, Bool>) -> Binding<Bool> {
         Binding(get: { session.params[keyPath: keyPath] },

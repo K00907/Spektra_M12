@@ -17,10 +17,11 @@
 //  ground-coloured well is not a track at all.
 
 import SwiftUI
+import Perception
 
 struct WhiteBalanceSection: View {
-    @Bindable var session: Session
-    var body: some View {
+    @Perception.Bindable var session: Session
+    var body: some View { WithPerceptionTracking {
         // "White Balance", which is the drawing's name for this section. The
         // other white balance in this window is the **decode** pair in Camera,
         // and they are told apart by where they are and by the caption below
@@ -49,15 +50,15 @@ struct WhiteBalanceSection: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-    }
+    } }
     private func adj(_ kp: WritableKeyPath<Adjustments, Double>) -> Binding<Double> {
         Binding(get: { session.layerAdjustments[keyPath: kp] }, set: { var a = session.layerAdjustments; a[keyPath: kp] = $0; session.layerAdjustments = a })
     }
 }
 
 struct ExposureSection: View {
-    @Bindable var session: Session
-    var body: some View {
+    @Perception.Bindable var session: Session
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionExposure), key: "exposure2", initiallyExpanded: false, menu: { AnyView(Button(L(.helpReset)) {
             var a = session.layerAdjustments
             a.exposure = 0; a.contrast = 0; a.brightness = 0; a.saturation = 0
@@ -82,26 +83,26 @@ struct ExposureSection: View {
                 ScrubSlider(label: L(.exposureWhitePoint), value: adj(\.whitePoint), range: 0...50, snap: 1, format: { String(format: "%.0f", $0) })
             }
         }
-    }
+    } }
     private func adj(_ kp: WritableKeyPath<Adjustments, Double>) -> Binding<Double> {
         Binding(get: { session.layerAdjustments[keyPath: kp] }, set: { var a = session.layerAdjustments; a[keyPath: kp] = $0; session.layerAdjustments = a })
     }
 }
 
 struct CurveSection: View {
-    @Bindable var session: Session
-    var body: some View {
+    @Perception.Bindable var session: Session
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionCurve), key: "curve", menu: { AnyView(Button(L(.helpResetChannels)) {
             var a = session.layerAdjustments; a.curves = CurveSet(); session.layerAdjustments = a }) }, metrics: .right) {
             CurveEditor(session: session)
                 .padding(.horizontal, Theme.Metric.plotInset)
         }
-    }
+    } }
 }
 
 struct ColorBalanceSection: View {
-    @Bindable var session: Session
-    var body: some View {
+    @Perception.Bindable var session: Session
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionColorBalance), key: "colorbalance", initiallyExpanded: false, menu: { AnyView(Button(L(.helpReset)) {
             var a = session.layerAdjustments; a.colorBalance = ColorBalance(); session.layerAdjustments = a }) }, metrics: .right) {
             // In a well, like Exposure and Print White Balance beside it. The
@@ -114,5 +115,5 @@ struct ColorBalanceSection: View {
             ColorBalanceEditor(session: session)
                 .padding(.horizontal, Theme.Metric.plotInset)
         }
-    }
+    } }
 }

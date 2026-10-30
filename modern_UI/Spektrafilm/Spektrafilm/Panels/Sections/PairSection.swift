@@ -7,14 +7,15 @@
 //  hole. Built from the rail's own parts.
 
 import SwiftUI
+import Perception
 
 struct PairSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     static let key = "pair"
 
     private var pair: HalfFramePair { session.pair ?? HalfFramePair(folder: "") }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection(L("Half-Frame Pair", zh: "半格拼接"), key: Self.key, initiallyExpanded: true) {
             RailRows {
                 VStack(spacing: 2) {
@@ -27,7 +28,7 @@ struct PairSection: View {
                 }
             }
         }
-    }
+    } }
 
     // MARK: the layer list
 
@@ -195,7 +196,7 @@ struct PairFramePicker: View {
         return f.isEmpty ? frames : frames.filter { $0.name.localizedCaseInsensitiveContains(f) }
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 8) {
             TextField(L("Filter by name", zh: "按文件名筛选"), text: $filter)
                 .textFieldStyle(.plain)
@@ -204,7 +205,7 @@ struct PairFramePicker: View {
                 .background(Theme.well, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.fixed(96), spacing: 8), count: 4), spacing: 8) {
-                    ForEach(shown) { frame in
+                    ForEach(shown) { frame in WithPerceptionTracking {
                         let isUsed = used.contains(frame.id.standardizedFileURL.path)
                         VStack(spacing: 3) {
                             CropMaskedThumbnail(url: frame.id, geometry: .default, maxPixel: 192) { image in
@@ -222,7 +223,7 @@ struct PairFramePicker: View {
                         .contentShape(Rectangle())
                         .onTapGesture { choose(frame.id) }
                         .help(frame.name)
-                    }
+                    } }
                 }
             }
             .frame(height: 300)
@@ -230,5 +231,5 @@ struct PairFramePicker: View {
         .padding(12)
         .frame(width: 4 * 96 + 3 * 8 + 24)
         .background(Theme.card)
-    }
+    } }
 }

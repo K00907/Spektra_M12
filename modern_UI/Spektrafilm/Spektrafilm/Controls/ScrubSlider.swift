@@ -6,6 +6,7 @@
 //  updates go through the binding while dragging.
 
 import SwiftUI
+import Perception
 
 /// The numbers a slider is drawn with. A default-constructed one is the
 /// editor's rails, which is what every caller but the export page wants; the
@@ -86,7 +87,7 @@ struct ScrubSlider: View {
 
     private var hasSecondLine: Bool { sublabelView != nil || sublabel != nil }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 0) {
                 Text(label)
@@ -120,7 +121,7 @@ struct ScrubSlider: View {
             }
         }
         .rowEnabled(!disabled)
-    }
+    } }
 
     private var fraction: CGFloat {
         CGFloat((value - range.lowerBound) / (range.upperBound - range.lowerBound)).clamped(to: 0...1)
@@ -130,7 +131,7 @@ struct ScrubSlider: View {
     }
 
     private var track: some View {
-        GeometryReader { geo in
+        GeometryReader { geo in WithPerceptionTracking {
             let w = geo.size.width
             let knobW = Theme.Metric.knobSize.width
             let x = fraction * (w - knobW) + knobW / 2
@@ -159,7 +160,7 @@ struct ScrubSlider: View {
                 }
                 .frame(height: m.trackHeight)
                 .padding(.horizontal, knobW / 2)
-                ForEach(Array(usable.enumerated()), id: \.offset) { _, usable in
+                ForEach(Array(usable.enumerated()), id: \.offset) { _, usable in WithPerceptionTracking {
                     let span = range.upperBound - range.lowerBound
                     let lo = CGFloat((max(usable.lowerBound, range.lowerBound) - range.lowerBound) / span)
                     let hi = CGFloat((min(usable.upperBound, range.upperBound) - range.lowerBound) / span)
@@ -167,7 +168,7 @@ struct ScrubSlider: View {
                         .frame(width: max((hi - lo) * (w - knobW), 3), height: 5)
                         .offset(x: lo * (w - knobW) + knobW / 2)
                         .allowsHitTesting(false)
-                }
+                } }
                 // Zero tick, only when zero is not at an end.
                 if zeroFraction > 0.001 && zeroFraction < 0.999 && abs(fraction - zeroFraction) > 0.02 {
                     Rectangle().fill(Theme.text.opacity(0.55)).frame(width: 1, height: 6)
@@ -203,7 +204,7 @@ struct ScrubSlider: View {
                     .onEnded { _ in dragStart = nil; onCommit() }
             )
             .simultaneousGesture(TapGesture(count: 2).onEnded { value = zero; onCommit() })
-        }
+        } }
         .frame(height: m.rowHeight)
     }
 
@@ -251,7 +252,7 @@ struct ScrubSlider: View {
 /// accessibility tokens: 10 pt of visible state inside a 28 pt target.
 struct CheckBox: View {
     @Binding var isOn: Bool
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button { isOn.toggle() } label: {
             ZStack {
                 // Off, this is an empty box; drawn in `text` it was a bright
@@ -268,7 +269,7 @@ struct CheckBox: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-    }
+    } }
 }
 
 /// Label at the left, checkbox at the right — Grain, Halation, Glare and Lens
@@ -298,7 +299,7 @@ struct ToggleRow: View {
     /// cannot be used right now.
     var help: String = ""
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 1) {
                 Text(label).font(labelFont).foregroundStyle(Theme.Ink.secondary)
@@ -321,5 +322,5 @@ struct ToggleRow: View {
         .frame(minHeight: sublabel.isEmpty ? nil : Theme.Metric.toggleRowHeight)
         .rowEnabled(enabled, because: reason)
         .help(help)
-    }
+    } }
 }

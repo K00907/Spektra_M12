@@ -22,6 +22,7 @@
 //  which is what makes two shut sections 30 pt apart.
 
 import SwiftUI
+import Perception
 
 /// The four numbers a section row is drawn with. A default-constructed one is
 /// the editor's rails; the export page's drawing has tighter rows and a
@@ -75,7 +76,7 @@ struct SectionHeader: View {
     var toggle: Binding<Bool>? = nil
     var toggleHelp: String = ""
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 0) {
             Button { withAnimation(.easeOut(duration: 0.15)) { expanded.toggle() } } label: {
                 Triangle()
@@ -152,7 +153,7 @@ struct SectionHeader: View {
         }
         .frame(height: metrics.headerHeight)
         .contentShape(Rectangle())
-    }
+    } }
 }
 
 struct Triangle: Shape {
@@ -167,9 +168,9 @@ struct Triangle: Shape {
 }
 
 struct EllipsisGlyph: View {
-    var body: some View {
-        HStack(spacing: 3) { ForEach(0..<3, id: \.self) { _ in Circle().fill(Theme.text).frame(width: 3, height: 3) } }
-    }
+    var body: some View { WithPerceptionTracking {
+        HStack(spacing: 3) { ForEach(0..<3, id: \.self) { _ in WithPerceptionTracking { Circle().fill(Theme.text).frame(width: 3, height: 3) } } }
+    } }
 }
 
 /// The rounded well a list sits in.
@@ -200,7 +201,7 @@ struct Well<Content: View>: View {
     /// the recipe list and nothing else; `fill: false` is the rest.
     var fill: Bool = true
     @ViewBuilder var content: () -> Content
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         content()
             .padding(.horizontal, padding)
             .padding(.vertical, vertical)
@@ -211,7 +212,7 @@ struct Well<Content: View>: View {
                 }
             }
             .padding(.horizontal, inset)
-    }
+    } }
 }
 
 /// A section: header + collapsible well. `expanded` persists per key.
@@ -250,7 +251,7 @@ struct PanelSection<Content: View>: View {
         _expanded = AppStorage(wrappedValue: initiallyExpanded, Session.uiKey + "section.\(key)")
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             SectionHeader(title: title, systemImage: systemImage, expanded: $expanded,
                           action: action, menu: menu, metrics: metrics,
@@ -271,7 +272,7 @@ struct PanelSection<Content: View>: View {
                     }
             }
         }
-    }
+    } }
 }
 
 
@@ -302,19 +303,19 @@ struct FittingLine: View {
         return (1...parts.count).reversed().map { parts.prefix($0).joined(separator: "  ·  ") }
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         LongestThatFits(alignment: alignment) {
-            ForEach(Array(Self.candidates(text).enumerated()), id: \.offset) { _, line in
+            ForEach(Array(Self.candidates(text).enumerated()), id: \.offset) { _, line in WithPerceptionTracking {
                 Text(line)
                     .font(.system(size: size * InterfaceScaleStore.shared.scale.factor, weight: .bold))
                     .foregroundStyle(color)
                     .lineLimit(1)
                     .fixedSize()
-            }
+            } }
         }
         .clipped()
         .help(text)
-    }
+    } }
 }
 
 /// Shows the first subview whose ideal width fits the width it is offered,

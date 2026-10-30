@@ -27,6 +27,7 @@
 //  and `Theme.Metric.Export.trafficLightLeading` is the inset.
 
 import SwiftUI
+import Perception
 
 /// The scene's id, in one place: the editor opens the window by it
 /// (`EditorWindow.consumeExportRequest`) and the app declares it.
@@ -35,12 +36,12 @@ enum ExportWindowID {
 }
 
 struct ExportWindow: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     /// See `ExportPage.startIn` — the snapshot harness is the only caller that
     /// passes anything but the default.
     var startIn: ExportPage.Mode = .viewer
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         ExportPage(session: session, startIn: startIn)
             .frame(minWidth: minWidth, minHeight: Theme.Metric.minWindow.height)
             .background(Theme.ground)
@@ -54,7 +55,7 @@ struct ExportWindow: View {
             )
             .ignoresSafeArea()
             .preferredColorScheme(.dark)
-    }
+    } }
 
     /// The drawing's own window. Its centre pane is the part that gives, so
     /// this is the size at which the capture can be laid over the drawing.

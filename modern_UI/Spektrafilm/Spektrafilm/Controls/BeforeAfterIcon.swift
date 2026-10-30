@@ -11,6 +11,7 @@
 //  rule this app now follows), and a bitmap or a colour-baked SVG cannot.
 
 import SwiftUI
+import Perception
 
 struct BeforeAfterIcon: View {
     /// The glyph's colour. The filled half is drawn at reduced opacity so the
@@ -21,8 +22,8 @@ struct BeforeAfterIcon: View {
     /// The source drawing's coordinate system.
     private static let art = CGSize(width: 60.8, height: 48.11)
 
-    var body: some View {
-        GeometryReader { geo in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { geo in WithPerceptionTracking {
             let m = BeforeAfterIcon.fit(geo.size)
             ZStack(alignment: .topLeading) {
                 // Left: the outline — "before" is the frame, not the picture.
@@ -38,8 +39,8 @@ struct BeforeAfterIcon: View {
                 }
                 .stroke(color, lineWidth: lineWidth)
             }
-        }
-    }
+        } }
+    } }
 
     /// Art coordinates → view coordinates: aspect-fit, centred.
     struct Fit {

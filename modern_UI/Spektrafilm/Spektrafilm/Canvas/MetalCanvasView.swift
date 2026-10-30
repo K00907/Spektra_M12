@@ -11,6 +11,7 @@
 import AppKit
 import MetalKit
 import SwiftUI
+import Perception
 
 enum CanvasTool: String, CaseIterable, Sendable { case select, hand, crop }
 

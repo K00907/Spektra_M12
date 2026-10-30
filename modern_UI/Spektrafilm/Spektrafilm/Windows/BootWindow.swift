@@ -18,11 +18,12 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct BootWindow: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
             Text("SpektraLab")
@@ -64,7 +65,7 @@ struct BootWindow: View {
         .frame(width: BootWindowController.size.width, height: BootWindowController.size.height)
         .background(Theme.card)
         .preferredColorScheme(.dark)
-    }
+    } }
 }
 
 /// Owns the boot window and the handover to the editor.

@@ -37,11 +37,12 @@
 //      └─┴──────────────────────────────────────────┘
 
 import SwiftUI
+import Perception
 
 struct MasksSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection("Masks", systemImage: "theatermasks", key: "masks",
                      initiallyExpanded: false, menu: { AnyView(menu) }) {
             VStack(spacing: 6) {
@@ -53,14 +54,14 @@ struct MasksSection: View {
                             .padding(.vertical, 2)
                     } else {
                         VStack(spacing: 0) {
-                            ForEach(session.masks) { m in row(m) }
+                            ForEach(session.masks) { m in WithPerceptionTracking { row(m) } }
                         }
                     }
                 }
                 if let selected = session.selectedMask { Sublayer(session: session, mask: selected) }
             }
         }
-    }
+    } }
 
     private func row(_ m: EditMask) -> some View {
         HStack(spacing: 6) {
@@ -100,9 +101,9 @@ struct MasksSection: View {
     private var menu: some View {
         Group {
             Menu("Add Mask") {
-                ForEach(MasksSection.addable) { kind in
+                ForEach(MasksSection.addable) { kind in WithPerceptionTracking {
                     Button(kind.label) { session.addMask(kind) }
-                }
+                } }
             }
             Button("Duplicate") { if let id = session.selectedMaskID { session.duplicateMask(id) } }
                 .disabled(session.selectedMaskID == nil)
@@ -125,7 +126,7 @@ struct MasksSection: View {
 // MARK: - the sublayer
 
 private struct Sublayer: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     let mask: EditMask
 
     private func update(_ change: (inout EditMask) -> Void) {
@@ -134,7 +135,7 @@ private struct Sublayer: View {
         session.selectedMask = m
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 0) {
             // The rail. One accent line down the leading edge is what makes
             // the whole block read as one level in rather than as a sixth
@@ -163,7 +164,7 @@ private struct Sublayer: View {
                 .strokeBorder(Theme.dim.opacity(0.35), lineWidth: 0.5)
         )
         .padding(.horizontal, Theme.Metric.wellInset)
-    }
+    } }
 
     private var header: some View {
         HStack(spacing: 6) {
@@ -183,7 +184,7 @@ private struct Sublayer: View {
 
     private var components: some View {
         VStack(spacing: 3) {
-            ForEach(mask.components) { c in
+            ForEach(mask.components) { c in WithPerceptionTracking {
                 HStack(spacing: 5) {
                     // The first component has nothing to subtract from, so
                     // its chip is a label rather than a control — the same
@@ -230,16 +231,16 @@ private struct Sublayer: View {
                 if c.kind == .luminanceRange { rangeControls(c) }
                 if c.kind == .colorRange { colorControls(c) }
                 if c.kind.hasHandles { featherControl(c) }
-            }
+            } }
             Menu {
-                ForEach(MasksSection.addable) { kind in
+                ForEach(MasksSection.addable) { kind in WithPerceptionTracking {
                     Button(kind.label) {
                         update { m in
                             guard m.components.count < EditMask.maxComponents else { return }
                             m.components.append(.make(kind))
                         }
                     }
-                }
+                } }
             } label: {
                 Text("Add component").font(Theme.Font.caption).foregroundStyle(Theme.dim)
                     .frame(maxWidth: .infinity, alignment: .leading)

@@ -14,6 +14,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct AboutWindow: View {
     @State private var showing: Licence?
@@ -80,7 +81,7 @@ struct AboutWindow: View {
         return "Version \(short) (\(build))"
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) {
             header
             Divider()
@@ -90,10 +91,10 @@ struct AboutWindow: View {
         }
         .frame(width: 460)
         .background(Theme.card)
-        .sheet(item: $showing) { licence in
+        .sheet(item: $showing) { licence in WithPerceptionTracking {
             LicenceSheet(licence: licence) { showing = nil }
-        }
-    }
+        } }
+    } }
 
     private var header: some View {
         HStack(alignment: .top, spacing: 14) {
@@ -153,7 +154,7 @@ struct AboutWindow: View {
     private var licenceList: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Licences").font(Theme.Font.groupHeader).foregroundStyle(Theme.text)
-            ForEach(AboutWindow.licences) { licence in
+            ForEach(AboutWindow.licences) { licence in WithPerceptionTracking {
                 Button { showing = licence } label: {
                     HStack(spacing: 6) {
                         Text(licence.title).font(Theme.Font.listItem).foregroundStyle(Theme.text)
@@ -165,7 +166,7 @@ struct AboutWindow: View {
                     .frame(height: 20).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-            }
+            } }
             if let dir = AboutWindow.licenceDirectory {
                 Button("Show the licence files in Finder") {
                     NSWorkspace.shared.activateFileViewerSelecting([dir])
@@ -198,7 +199,7 @@ private struct LicenceSheet: View {
     let dismiss: () -> Void
     @State private var text = ""
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 10) {
             Text(licence.title).font(.system(size: 13, weight: .semibold))
             ScrollView {
@@ -223,5 +224,5 @@ private struct LicenceSheet: View {
         .padding(16)
         .frame(width: 640, height: 520)
         .task { text = licence.body }
-    }
+    } }
 }

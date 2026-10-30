@@ -27,9 +27,10 @@
 //  pasted placement still go through the engine and get its refusal.
 
 import Foundation
+import Perception
 
 @MainActor
-@Observable
+@Perceptible
 final class LatitudeModel {
     /// The last probe, and the frame it was taken on. Kept while a newer one
     /// is on its way, so the graph does not blink on every edit.

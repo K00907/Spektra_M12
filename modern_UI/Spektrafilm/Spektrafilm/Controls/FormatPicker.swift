@@ -15,6 +15,7 @@
 //  and not a judgement made per caller.
 
 import SwiftUI
+import Perception
 
 struct PillMenu<T: Hashable>: View {
     let label: String
@@ -38,7 +39,7 @@ struct PillMenu<T: Hashable>: View {
     /// An extra mark after the value: the `CINE` pill, on a cine film type.
     var trailingBadge: (T) -> Bool = { _ in false }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 0) {
             Text(label).font(font).foregroundStyle(Theme.Ink.secondary)
                 // A column, not a cage: at least the column, never truncated.
@@ -47,11 +48,11 @@ struct PillMenu<T: Hashable>: View {
                 .frame(minWidth: labelWidth, alignment: .leading)
             if !fill { Spacer(minLength: 0) }
             Menu {
-                ForEach(options, id: \.self) { o in
+                ForEach(options, id: \.self) { o in WithPerceptionTracking {
                     Button { selection = o } label: {
                         if o == selection { Label(title(o), systemImage: "checkmark") } else { Text(title(o)) }
                     }
-                }
+                } }
             } label: {
                 HStack(spacing: 0) {
                     Text(title(selection)).font(font).foregroundStyle(Theme.text).lineLimit(1)
@@ -86,7 +87,7 @@ struct PillMenu<T: Hashable>: View {
         }
         .frame(height: Theme.Metric.rowHeight)
         .rowEnabled(enabled, because: reason)
-    }
+    } }
 }
 
 /// Side Length: a number field and a unit pill, right-aligned, and greyed
@@ -112,7 +113,7 @@ struct UnitField: View {
         String(format: "%.\(unit.decimals)f", unit.fromMM(value))
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 0) {
             Text(label).font(Theme.Font.label).foregroundStyle(Theme.Ink.secondary)
                 // A column, not a cage: at least the column, never truncated.
@@ -134,11 +135,11 @@ struct UnitField: View {
                             in: RoundedRectangle(cornerRadius: Theme.Metric.fieldRadius, style: .continuous))
             Spacer(minLength: 4)
             Menu {
-                ForEach(SideUnit.allCases) { u in
+                ForEach(SideUnit.allCases) { u in WithPerceptionTracking {
                     Button { unit = u } label: {
                         if u == unit { Label(u.title, systemImage: "checkmark") } else { Text(u.title) }
                     }
-                }
+                } }
             } label: {
                 HStack(spacing: 0) {
                     // The drawing's unit pill is 38.3 pt wide and has to hold
@@ -169,7 +170,7 @@ struct UnitField: View {
         // still 0.945 in, and reading it in inches is not editing it. Only
         // the field takes the greying.
         .rowEnabled(true)
-    }
+    } }
 
     private var field: some View {
         Group {
@@ -209,12 +210,12 @@ struct CinePill: View {
     /// it takes, instead of the accent on white.
     var inverted = false
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         let ink = inverted ? Theme.onSelection : Theme.accent
         Text("CINE")
             .font(Theme.Font.cine)
             .foregroundStyle(ink)
             .frame(width: Theme.Metric.cinePill.width, height: Theme.Metric.cinePill.height)
             .overlay(Capsule().stroke(ink, lineWidth: 1))
-    }
+    } }
 }

@@ -10,29 +10,30 @@
 //  that hole's menu, and in the crop mode a drag moves the picture.
 
 import SwiftUI
+import Perception
 
 struct PairOverlay: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
-    var body: some View {
-        GeometryReader { geo in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { geo in WithPerceptionTracking {
             let v = session.viewportSnapshot
             let rects = session.pairHoleRects
             if let pair = session.pair, v.image.width > 1 {
                 ZStack(alignment: .topLeading) {
-                    ForEach(HalfFramePair.Side.allCases, id: \.self) { side in
+                    ForEach(HalfFramePair.Side.allCases, id: \.self) { side in WithPerceptionTracking {
                         if let n = rects[side] {
                             let r = viewRect(n, v)
                             hole(side, pair: pair, rect: r)
                         }
-                    }
+                    } }
                     if session.pairPlacing {
                         cropBar.position(x: geo.size.width / 2, y: geo.size.height - 30)
                     }
                 }
             }
-        }
-    }
+        } }
+    } }
 
     private func viewRect(_ n: CGRect, _ v: ViewportState) -> CGRect {
         let w = v.image.width * v.scale, h = v.image.height * v.scale
@@ -85,13 +86,13 @@ struct PairOverlay: View {
             .position(x: r.midX, y: r.midY)
             .popover(isPresented: Binding(get: { session.pairPicker == side },
                                           set: { if !$0, session.pairPicker == side { session.pairPicker = nil } }),
-                     arrowEdge: .bottom) {
+                     arrowEdge: .bottom) { WithPerceptionTracking {
                 PairFramePicker(frames: session.pairCandidates,
                                 used: Set([pair.left?.path, pair.right?.path].compactMap { $0 })) { url in
                     session.pairPicker = nil
                     session.setHole(side, to: url)
                 }
-            }
+            } }
             .allowsHitTesting(false)
     }
 
@@ -120,15 +121,15 @@ struct PairOverlay: View {
 /// (or the first empty one). Only a pair takes the drop; for a frame the
 /// window's own handler opens whatever was dropped, as before.
 struct PairDrop: ViewModifier {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
-    func body(content: Content) -> some View {
+    func body(content: Content) -> some View { WithPerceptionTracking {
         if session.pair != nil {
             content.onDrop(of: [.fileURL], delegate: Target(session: session))
         } else {
             content
         }
-    }
+    } }
 
     private struct Target: DropDelegate {
         let session: Session
@@ -167,8 +168,8 @@ struct PairDragPreview: View {
 
     private struct Key: Equatable { let path: String; let geometry: Geometry; let turns: Int }
 
-    var body: some View {
-        GeometryReader { geo in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { geo in WithPerceptionTracking {
             if let image {
                 // Already turned (`framedPreview`), so the cut is taken as is.
                 let source = CGSize(width: image.width, height: image.height)
@@ -184,11 +185,11 @@ struct PairDragPreview: View {
                         .frame(width: geo.size.width, height: geo.size.height)
                 }
             }
-        }
+        } }
         .task(id: Key(path: hole.path, geometry: hole.geometry, turns: placement.quarterTurns)) {
             var framed = hole
             framed.placement.quarterTurns = placement.quarterTurns
             image = await Task.detached(priority: .userInitiated) { PairComposer.framedPreview(framed) }.value
         }
-    }
+    } }
 }

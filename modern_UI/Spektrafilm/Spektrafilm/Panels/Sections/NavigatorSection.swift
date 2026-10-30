@@ -14,9 +14,10 @@
 //  up the canvas shows the whole photograph, and so does this.
 
 import SwiftUI
+import Perception
 
 struct NavigatorSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     @State private var image: CGImage?
     /// `image` through the frame's geometry: what the canvas shows.
     @State private var framed: CGImage?
@@ -28,7 +29,7 @@ struct NavigatorSection: View {
         let geometry: Geometry
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionNavigator), key: "navigator") {
             VStack(alignment: .leading, spacing: Theme.Metric.navigatorButtonGap) {
                 NavigatorWell(session: session, image: framed)
@@ -58,7 +59,7 @@ struct NavigatorSection: View {
             guard let url = session.selection, (n.object as? URL) == url else { return }
             Task { await load() }
         }
-    }
+    } }
 
     private func load() async {
         guard let url = session.selection else { image = nil; return }
@@ -93,11 +94,11 @@ struct NavigatorSection: View {
 }
 
 private struct NavigatorWell: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     let image: CGImage?
 
-    var body: some View {
-        GeometryReader { geo in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { geo in WithPerceptionTracking {
             let pic = pictureRect(in: geo.size)
             ZStack(alignment: .topLeading) {
                 Rectangle().fill(Theme.navigatorWell)
@@ -127,8 +128,8 @@ private struct NavigatorWell: View {
                         session.centreView(onNormalised: n)
                     }
             )
-        }
-    }
+        } }
+    } }
 
     /// The thumbnail fitted into the well, centred.
     private func pictureRect(in size: CGSize) -> CGRect? {

@@ -18,9 +18,10 @@
 //  neutral, and a boundary it did not measure would mislead.
 
 import SwiftUI
+import Perception
 
 struct LatitudeSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
     /// A fixed axis, so two frames or two papers compare at a glance.
     static let axis: ClosedRange<Double> = -8...8
@@ -47,7 +48,7 @@ struct LatitudeSection: View {
         return "\(film) · \(short(session.params.printStock))"
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionLatitude), key: "latitude", note: pairNote) {
             VStack(alignment: .leading, spacing: 0) {
                 if let readout {
@@ -74,7 +75,7 @@ struct LatitudeSection: View {
             }
             .padding(.horizontal, Theme.Metric.rowInset)
         }
-    }
+    } }
 
     private func readouts(_ r: LatitudeReadout) -> some View {
         VStack(spacing: 4) {
@@ -133,7 +134,7 @@ struct LatitudeSection: View {
 struct LatitudePlot: View {
     let readout: LatitudeReadout
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Canvas { ctx, size in
             let axis = LatitudeSection.axis
             let plotH = Theme.Metric.latitudePlotHeight
@@ -237,7 +238,7 @@ struct LatitudePlot: View {
                 ctx.draw(label, at: CGPoint(x: x(e), y: bandY + bandH + 3), anchor: anchor)
             }
         }
-    }
+    } }
 
     static func strength(at ev: Double, _ s: [(ev: Double, strength: Double)]) -> Double {
         guard let first = s.first, let last = s.last else { return 0 }

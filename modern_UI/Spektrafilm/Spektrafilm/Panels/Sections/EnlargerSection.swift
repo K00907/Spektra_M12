@@ -14,11 +14,12 @@
 //  0.01 is ~9 % of the mid-grey exposure), so the row shows it ×100.
 
 import SwiftUI
+import Perception
 
 struct EnlargerSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         // Collapsed by default, as v4 draws it.
         PanelSection(L(.sectionEnlarger), key: "enlarger", initiallyExpanded: false,
                      action: SectionAction(help: L(.helpResetEnlarger)) { reset() },
@@ -58,7 +59,7 @@ struct EnlargerSection: View {
                     .help(session.params.printEffects ? "" : L(.reasonPrintEffectsOff))
             }
         }
-    }
+    } }
 
     private func reset() { session.resetEnlarger() }
 

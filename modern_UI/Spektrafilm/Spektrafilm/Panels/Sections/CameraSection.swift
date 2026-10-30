@@ -49,11 +49,12 @@
 //  that can be non-selectable — see `Session.lensCorrectionEnabled`.
 
 import SwiftUI
+import Perception
 
 struct CameraSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionCamera), key: "camera",
                      action: SectionAction(help: L(.helpResetFilmExposure)) { session.filmExposure = 0 },
                      menu: { AnyView(menu) }, note: pairNote) {
@@ -91,7 +92,7 @@ struct CameraSection: View {
                           reason: session.lensCorrectionReason)
             }
         }
-    }
+    } }
 
     /// On a pair: which frame this section is about.
     private var pairNote: String? {
@@ -126,14 +127,14 @@ struct CameraSection: View {
             // closest to profile names — which stay as they are. They are the
             // only rows in this section left in English.
             Menu(L(.helpWhiteBalancePreset)) {
-                ForEach(DecodeSettings.WhiteBalance.allCases.filter { $0 != .custom }, id: \.self) { wb in
+                ForEach(DecodeSettings.WhiteBalance.allCases.filter { $0 != .custom }, id: \.self) { wb in WithPerceptionTracking {
                     Button {
                         session.setWhiteBalance(wb)
                     } label: {
                         if session.decode.whiteBalance == wb { Label(wb.rawValue, systemImage: "checkmark") }
                         else { Text(wb.rawValue) }
                     }
-                }
+                } }
             }
         }
     }
@@ -153,14 +154,14 @@ struct CameraSection: View {
 struct AsShotLine: View {
     @Binding var isOn: Bool
     var enabled: Bool
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 3) {
             Text(L(.cameraFilmExposureAsShot)).font(Theme.Font.sublabel).foregroundStyle(Theme.Ink.tertiary)
             CheckBox(isOn: $isOn)
             Spacer(minLength: 0)
         }
         .rowEnabled(enabled)
-    }
+    } }
 }
 
 /// The rows of a section, inset and spaced the way the drawing insets and
@@ -172,11 +173,11 @@ struct AsShotLine: View {
 /// kind of drift a capture catches late.
 struct RailRows<Content: View>: View {
     @ViewBuilder var content: () -> Content
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: Theme.Metric.rowSpacing) {
             content()
         }
         .padding(.horizontal, Theme.Metric.rowInset)
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
+    } }
 }

@@ -14,9 +14,10 @@
 //  visibly, rather than exporting a picture with transparent triangles in it.
 
 import SwiftUI
+import Perception
 
 struct CropSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
     private var size: CGSize { session.sourceImageSize }
     private var g: Geometry { session.geometry }
@@ -25,7 +26,7 @@ struct CropSection: View {
     // didn't draw the crop, since it just need to change it's layout to the
     // new system, everything else works fine there." So the rows are the
     // rows, moved onto the rail — no well, no section icon, the new insets.
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         // **Held while Film Edge is on**: the picture is then framed in the
         // gate, at the gate's aspect, and this crop is kept for when the film
         // edge comes off (RFC-032 §17.5).
@@ -53,7 +54,7 @@ struct CropSection: View {
                         because: L("Film Edge frames the picture in its gate. Switch it off to crop.",
                                    zh: "片边在片门中取景。关闭片边后可裁剪。"))
         }
-    }
+    } }
 
     /// The ratio, and which way up it is.
     ///

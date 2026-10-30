@@ -26,10 +26,11 @@
 
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct ExportPage: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     /// Which mode to open in. Only the snapshot harness passes anything but
     /// the default: `--export-grid` is how the Grid half of the mode
     /// transition gets looked at, and a transition only ever exercised in one
@@ -129,7 +130,7 @@ struct ExportPage: View {
                 set: { store.selected = $0 })
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         // Three flush columns, and the bar floats over the middle one.
         //
         // This page kept the **old** shape for two months after the editor
@@ -180,7 +181,7 @@ struct ExportPage: View {
         }
         .task(id: proofKey) { await makeProof() }
         .task(id: recipe.wrappedValue.format) { OpenWithCatalog.refresh(for: recipe.wrappedValue.format) }
-    }
+    } }
 
     // MARK: - the worklist
 
@@ -449,9 +450,9 @@ struct ExportPage: View {
         Menu {
             Button(L("Fit", zh: "适合")) { zoom = 1 }
             Divider()
-            ForEach([0.5, 1.0, 2.0, 4.0], id: \.self) { f in
+            ForEach([0.5, 1.0, 2.0, 4.0], id: \.self) { f in WithPerceptionTracking {
                 Button("\(Int(f * 100)) %") { zoom = CGFloat(f) }
-            }
+            } }
         } label: {
             Text("\(Int((zoom * 100).rounded())) %")
                 .font(F.pill)
@@ -504,10 +505,10 @@ struct ExportPage: View {
                          ("naming", AnyView(namingSection)),
                          ("format", AnyView(formatSection)),
                          ("summary", AnyView(summarySection))]
-                    ForEach(Array(sections.enumerated()), id: \.element.0) { index, entry in
+                    ForEach(Array(sections.enumerated()), id: \.element.0) { index, entry in WithPerceptionTracking {
                         if index > 0 { Hairline() }
                         entry.1
-                    }
+                    } }
                 }
             }
             footer
@@ -568,7 +569,7 @@ struct ExportPage: View {
                 VStack(spacing: 0) {
                     ScrollView {
                         VStack(spacing: M.recipeRowSpacing) {
-                            ForEach(store.recipes) { r in recipeRow(r) }
+                            ForEach(store.recipes) { r in WithPerceptionTracking { recipeRow(r) } }
                         }
                     }
                     // As tall as it needs to be, up to the drawing's height.
@@ -855,7 +856,7 @@ struct ExportPage: View {
         // Wraps (2026-09-28): the chips' words are in full now, and four of
         // them are wider than the row at a large interface scale.
         FlowLayout(spacing: M.chipSpacing, lineSpacing: 3) {
-            ForEach(recipe.wrappedValue.naming.chips) { t in tokenChip(t) }
+            ForEach(recipe.wrappedValue.naming.chips) { t in WithPerceptionTracking { tokenChip(t) } }
         }
     }
 
@@ -906,9 +907,9 @@ struct ExportPage: View {
                         Text(L("Format", zh: "格式")).font(F.label).foregroundStyle(Theme.Ink.secondary)
                             .fixedSize().frame(minWidth: ExportPage.labelColumn, alignment: .leading)
                         PillField(title: formatName(recipe.wrappedValue.format), font: F.label) {
-                            ForEach(ExportFormat.allCases) { f in
+                            ForEach(ExportFormat.allCases) { f in WithPerceptionTracking {
                                 Button(formatName(f)) { recipe.wrappedValue.format = f }
-                            }
+                            } }
                         }
                         // Its natural width, so the format name beside it keeps the
                         // rest of the row. Sharing it evenly truncated "DI
@@ -975,11 +976,11 @@ struct ExportPage: View {
                          help: format.depthIsChoosable
                          ? L("Bit depth. 16-bit switches to TIFF, 8-bit to PNG.", zh: "位深。16 位切换为 TIFF，8 位切换为 PNG。")
                          : L("\(format.shortLabel) has one depth — it is part of the format.", zh: "\(formatName(format)) 只有一种位深——它是格式的一部分。")) {
-            ForEach([8, 16], id: \.self) { depth in
+            ForEach([8, 16], id: \.self) { depth in WithPerceptionTracking {
                 Button(L("\(depth) bit", zh: "\(depth) 位")) {
                     if let f = ExportFormat.withDepth(depth, like: format) { recipe.wrappedValue.format = f }
                 }
-            }
+            } }
         }
     }
 
@@ -1135,9 +1136,9 @@ struct ExportPage: View {
     @ViewBuilder private var openWithItems: some View {
         Button(L("None", zh: "无")) { recipe.wrappedValue.openWith = nil }
         if !OpenWithCatalog.apps.isEmpty { Divider() }
-        ForEach(OpenWithCatalog.apps, id: \.path) { app in
+        ForEach(OpenWithCatalog.apps, id: \.path) { app in WithPerceptionTracking {
             Button(app.name) { recipe.wrappedValue.openWith = app }
-        }
+        } }
     }
 
     private var summarySection: some View {
@@ -1155,11 +1156,11 @@ struct ExportPage: View {
         }, metrics: Self.sectionMetrics) {
             Well(padding: M.wellPadding, vertical: M.wellVertical, inset: M.wellInset, fill: false) {
                 VStack(alignment: .leading, spacing: 4) {
-                    ForEach(Array(summaryLines.enumerated()), id: \.offset) { _, line in
+                    ForEach(Array(summaryLines.enumerated()), id: \.offset) { _, line in WithPerceptionTracking {
                         Text(line).font(F.value).foregroundStyle(Theme.secondaryText)
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                    }
+                    } }
                 }
             }
         }
@@ -1300,7 +1301,7 @@ struct ExportPage: View {
     private var displayImage: CGImage? { filePreview ?? proof?.displayImage }
 
     private var viewerPane: some View {
-        GeometryReader { geo in
+        GeometryReader { geo in WithPerceptionTracking {
             ScrollView([.horizontal, .vertical]) {
                 ZStack {
                     if let shown = displayImage {
@@ -1329,7 +1330,7 @@ struct ExportPage: View {
             }
             .onAppear { paneSize = geo.size }
             .onChange(of: geo.size) { _, s in paneSize = s }
-        }
+        } }
         .transition(.opacity)
     }
 
@@ -1379,10 +1380,10 @@ struct ExportPage: View {
                         .foregroundStyle(Theme.exportAccent)
                 }
                 let caveats = ProofCaveat.lines(for: proof, chinese: chinese)
-                ForEach(caveats, id: \.text) { caveat in
+                ForEach(caveats, id: \.text) { caveat in WithPerceptionTracking {
                     Text(caveat.text)
                         .foregroundStyle(caveat.isWarning ? Theme.exportAccent : Theme.dim)
-                }
+                } }
             }
             .font(Theme.Font.caption)
             .help(captionHelp(proof))
@@ -1445,7 +1446,7 @@ struct ExportPage: View {
     /// column count, and a thumbnail takes the drawing's 0.66 of its column,
     /// so the gap between two is the other third at every count.
     private var gridCard: some View {
-        GeometryReader { geo in
+        GeometryReader { geo in WithPerceptionTracking {
             let pitch = max(1, geo.size.width - M.gridPadding) / CGFloat(gridColumns)
             let cell = pitch * M.gridCellFraction
             let gap = pitch - cell
@@ -1457,7 +1458,7 @@ struct ExportPage: View {
                     if worklist.isEmpty {
                         emptyWorklist
                     } else {
-                        ForEach(worklist) { frame in
+                        ForEach(worklist) { frame in WithPerceptionTracking {
                             ExportGridCell(frame: frame,
                                            chosen: frame.id == session.selection,
                                            state: session.frameStates[frame.id] ?? .unprocessed,
@@ -1469,7 +1470,7 @@ struct ExportPage: View {
                                         NSWorkspace.shared.activateFileViewerSelecting([frame.id])
                                     }
                                 }
-                        }
+                        } }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1477,7 +1478,7 @@ struct ExportPage: View {
                 .padding(.top, M.gridTopInset)
                 .padding(.bottom, M.gridTopInset)
             }
-        }
+        } }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .railCard()
         .transition(.opacity)
@@ -1493,13 +1494,13 @@ struct ExportPage: View {
                 if worklist.isEmpty {
                     emptyWorklist
                 } else {
-                    ForEach(worklist) { frame in
+                    ForEach(worklist) { frame in WithPerceptionTracking {
                         ExportStripCell(frame: frame,
                                         chosen: frame.id == session.selection,
                                         state: session.frameStates[frame.id] ?? .unprocessed,
                                         geometry: session.thumbnailGeometry(for: frame.id))
                             .onTapGesture { tap(frame) }
-                    }
+                    } }
                 }
             }
             .padding(.horizontal, M.thumbMargin)
@@ -1796,16 +1797,16 @@ private struct ExportStripCell: View {
             .stroke(Theme.selectionFrame, lineWidth: chosen ? 2 : 0)
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         CropMaskedThumbnail(url: frame.id, geometry: geometry, maxPixel: 1024) { image in
             cell(image)
         }
         .help(frame.name)
-    }
+    } }
 
     private func cell(_ image: CGImage?) -> some View {
         VStack(spacing: 6) {
-            GeometryReader { geometry in
+            GeometryReader { geometry in WithPerceptionTracking {
                 let box = CGSize(width: geometry.size.width,
                                  height: Theme.Metric.Export.thumbMax)
                 ZStack {
@@ -1826,7 +1827,7 @@ private struct ExportStripCell: View {
                             .overlay(frameStroke)
                     }
                 }
-            }
+            } }
             .frame(maxWidth: .infinity)
             .frame(height: Theme.Metric.Export.thumbMax)
             .frame(maxWidth: .infinity)
@@ -1883,12 +1884,12 @@ private struct ExportGridCell: View {
             .stroke(Theme.selectionFrame, lineWidth: chosen ? 2 : 0)
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         CropMaskedThumbnail(url: frame.id, geometry: geometry, maxPixel: 1024) { image in
             cell(image)
         }
         .help(frame.name)
-    }
+    } }
 
     private func cell(_ image: CGImage?) -> some View {
         VStack(spacing: 6) {
@@ -1951,7 +1952,7 @@ private struct PillField<MenuContent: View>: View {
     var help: String?
     @ViewBuilder var menu: () -> MenuContent
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Menu { menu() } label: {
             HStack {
                 Text(title).font(font)
@@ -1974,7 +1975,7 @@ private struct PillField<MenuContent: View>: View {
         .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden)
         .disabled(dimmed)
         .help(help ?? "")
-    }
+    } }
 }
 
 // MARK: - what the destination could not hold

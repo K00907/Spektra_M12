@@ -17,15 +17,16 @@
 //  looks live and does nothing is worse than no row.
 
 import SwiftUI
+import Perception
 
 struct FilmEdgeSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
     @State private var formatMenu = false
 
     static let key = "filmEdge"
     private var edge: FilmEdgeSettings { session.params.filmEdge }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionFilmEdge), key: Self.key, initiallyExpanded: false,
                      note: edge.active ? nil : L(.edgeOff),
                      foldedNote: summary,
@@ -91,7 +92,7 @@ struct FilmEdgeSection: View {
             .rowEnabled(edge.active, because: L("Switch Film Edge on in its header.",
                                                 zh: "先在标题栏开启片边。"))
         }
-    }
+    } }
 
     // MARK: rows
 
@@ -143,14 +144,14 @@ struct FilmEdgeSection: View {
                 .contentShape(Capsule())
             }
             .buttonStyle(.plain)
-            .popover(isPresented: $formatMenu, arrowEdge: .trailing) {
+            .popover(isPresented: $formatMenu, arrowEdge: .trailing) { WithPerceptionTracking {
                 FilmEdgeFormatMenu(selection: edge.format, view: edge.view,
                                    stockName: shortStockName,
                                    isMade: { session.filmStockIsMade(in: $0) }) { format in
                     formatMenu = false
                     set(\.format, format)
                 }
-            }
+            } }
             Spacer(minLength: 6)
             Text(edge.format.gateLabel)
                 .font(Theme.Font.caption).foregroundStyle(Theme.Ink.tertiary)
@@ -338,18 +339,18 @@ struct FilmEdgeFormatMenu: View {
     let isMade: (FilmEdgeFormat) -> Bool
     let pick: (FilmEdgeFormat) -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(FilmEdgeFormat.Group.allCases, id: \.self) { group in
+            ForEach(FilmEdgeFormat.Group.allCases, id: \.self) { group in WithPerceptionTracking {
                 Text(group.title)
                     .font(Theme.Font.caption).foregroundStyle(Theme.Ink.tertiary)
                     .padding(.horizontal, 12)
                     .padding(.top, group == FilmEdgeFormat.Group.allCases.first ? 10 : 8)
                     .padding(.bottom, 4)
-                ForEach(FilmEdgeFormat.allCases.filter { $0.group == group }) { format in
+                ForEach(FilmEdgeFormat.allCases.filter { $0.group == group }) { format in WithPerceptionTracking {
                     row(format)
-                }
-            }
+                } }
+            } }
             Hairline().padding(.horizontal, 8).padding(.top, 6)
             VStack(alignment: .leading, spacing: 2) {
                 if let made = madeNote {
@@ -363,7 +364,7 @@ struct FilmEdgeFormatMenu: View {
         }
         .frame(width: Theme.Metric.edgeFormatMenuWidth)
         .background(Theme.card)
-    }
+    } }
 
     private func row(_ format: FilmEdgeFormat) -> some View {
         let available = format.isAvailable && isMade(format)
@@ -430,7 +431,7 @@ struct FilmEdgeFormatMenu: View {
 private struct FormatGlyph: View {
     let format: FilmEdgeFormat
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Canvas { ctx, size in
             let gate = format.gateMM
             // One scale for every row, set by the longest gate that has to
@@ -453,7 +454,7 @@ private struct FormatGlyph: View {
                 }
             }
         }
-    }
+    } }
 }
 
 // MARK: - rows this section and Date Back share
@@ -462,12 +463,12 @@ private struct FormatGlyph: View {
 struct RowLabel: View {
     let text: String
     init(_ text: String) { self.text = text }
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Text(text).font(Theme.Font.label).foregroundStyle(Theme.Ink.secondary)
             .fixedSize()
             .padding(.trailing, 6)
             .frame(minWidth: Theme.Metric.sliderLabelWidth, alignment: .leading)
-    }
+    } }
 }
 
 /// A small caption over a group of rows inside one section — *Gate and
@@ -476,13 +477,13 @@ struct RowLabel: View {
 struct RailSubhead: View {
     let text: String
     init(_ text: String) { self.text = text }
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Text(text)
             .font(Theme.Font.meta).foregroundStyle(Theme.Ink.tertiary)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, Theme.Metric.subheadTop)
-    }
+    } }
 }
 
 /// Label and a `SegmentedSwitch` after it: View, Holes, Face, Where.
@@ -494,14 +495,14 @@ struct PillSwitchRow<Option: Hashable & Identifiable>: View {
     var enabled: (Option) -> Bool = { _ in true }
     var reason: (Option) -> String = { _ in "" }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         HStack(spacing: 0) {
             RowLabel(label)
             SegmentedSwitch(options: options, selection: $selection, title: title,
                             enabled: enabled, reason: reason)
         }
         .frame(minHeight: Theme.Metric.rowHeight)
-    }
+    } }
 }
 
 /// *Another* and *Another frame*: a new draw of a seed, in a pill with the
@@ -512,7 +513,7 @@ struct DiceButton: View {
     var fill = false
     let action: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(action: action) {
             HStack(spacing: 5) {
                 Image(systemName: "die.face.5")
@@ -529,7 +530,7 @@ struct DiceButton: View {
         }
         .buttonStyle(.plain)
         .help(help)
-    }
+    } }
 }
 
 // MARK: - format words

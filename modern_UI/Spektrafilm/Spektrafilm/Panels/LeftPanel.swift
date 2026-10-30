@@ -15,9 +15,10 @@
 //  Panels/Sections and add one line to the list.
 
 import SwiftUI
+import Perception
 
 struct LeftPanel: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
     /// The rail's sections, in order. A statement at a time, so the type
     /// checker has no long expression to solve.
@@ -40,7 +41,7 @@ struct LeftPanel: View {
         return s
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         VStack(spacing: 0) {
             header
             Hairline()
@@ -50,15 +51,15 @@ struct LeftPanel: View {
                     // A divider **between** sections, never after the last:
                     // a rule under the final section is a bottom border
                     // against empty rail, not a separator.
-                    ForEach(Array(sections.enumerated()), id: \.element.0) { index, entry in
+                    ForEach(Array(sections.enumerated()), id: \.element.0) { index, entry in WithPerceptionTracking {
                         if index > 0 { SectionDivider(above: sections[index - 1].0) }
                         entry.1
-                    }
+                    } }
                 }
             }
         }
         .railCard()
-    }
+    } }
 
     private var header: some View {
         HStack(spacing: 0) {
@@ -109,7 +110,7 @@ struct SidebarToggle: View {
         }
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button { withAnimation(.easeOut(duration: 0.18)) { collapsed.toggle() } } label: {
             Image(systemName: symbol)
                 .font(.system(size: Theme.Metric.sidebarIcon, weight: .regular))
@@ -119,7 +120,7 @@ struct SidebarToggle: View {
         }
         .buttonStyle(.plain)
         .help(help)
-    }
+    } }
 }
 
 struct PanelIconButton: View {
@@ -130,7 +131,7 @@ struct PanelIconButton: View {
     /// control in the app (PRD; `View.rowEnabled(_:)`).
     var enabled = true
     let action: () -> Void
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Button(action: action) {
             Image(systemName: systemImage)
                 .font(.system(size: Theme.Metric.panelIcon, weight: .regular))
@@ -141,13 +142,13 @@ struct PanelIconButton: View {
         .buttonStyle(.plain)
         .rowEnabled(enabled)
         .help(help)
-    }
+    } }
 }
 
 struct VerticalEllipsis: View {
-    var body: some View {
-        VStack(spacing: 3) { ForEach(0..<3, id: \.self) { _ in Circle().fill(Theme.text).frame(width: 3, height: 3) } }
-    }
+    var body: some View { WithPerceptionTracking {
+        VStack(spacing: 3) { ForEach(0..<3, id: \.self) { _ in WithPerceptionTracking { Circle().fill(Theme.text).frame(width: 3, height: 3) } } }
+    } }
 }
 
 extension View {

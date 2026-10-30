@@ -13,6 +13,7 @@
 //  (`Session.thumbnailGeometry(for:)`).
 
 import SwiftUI
+import Perception
 
 enum CropMask {
     /// How much of the outside the mask hides. "Very non-transparent": the
@@ -81,7 +82,7 @@ struct CropMaskedThumbnail<Content: View>: View {
         let geometry: Geometry
     }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         content(shown ?? raw)
             .task(id: url) { raw = await ThumbnailCache.shared.thumbnail(for: url, maxPixel: maxPixel) }
             .task(id: Key(image: raw.map(ObjectIdentifier.init), geometry: geometry)) {
@@ -91,5 +92,5 @@ struct CropMaskedThumbnail<Content: View>: View {
                 guard (n.object as? URL) == url else { return }
                 Task { raw = await ThumbnailCache.shared.thumbnail(for: url, maxPixel: maxPixel) }
             }
-    }
+    } }
 }

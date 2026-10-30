@@ -29,6 +29,7 @@
 //  drag the window buttons with it.
 
 import SwiftUI
+import Perception
 
 /// What a panel may be, in points.
 ///
@@ -88,7 +89,7 @@ struct PanelResizeHandle: View {
     @State private var hovering = false
     @State private var widthAtDragStart: CGFloat?
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Rectangle()
             .fill(.clear)
             .frame(width: Self.hitWidth)
@@ -130,7 +131,7 @@ struct PanelResizeHandle: View {
                 }
             )
             .accessibilityLabel("Resize panel")
-    }
+    } }
 }
 
 /// A panel width that survives a relaunch.
@@ -139,7 +140,7 @@ struct PanelResizeHandle: View {
 /// reason recorded there: an earlier build of this app shipped under the same
 /// bundle identifier and left its own keys behind.
 @MainActor
-@Observable
+@Perceptible
 final class PanelWidthStore {
     let range: PanelWidthRange
     private let key: String

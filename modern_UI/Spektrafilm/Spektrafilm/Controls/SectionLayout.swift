@@ -14,9 +14,10 @@
 //  section scrolls inside itself rather than clipping a control in half.
 
 import SwiftUI
+import Perception
 
 @MainActor
-@Observable
+@Perceptible
 final class SectionLayoutStore {
     static let shared = SectionLayoutStore()
 
@@ -29,7 +30,7 @@ final class SectionLayoutStore {
     private(set) var heights: [String: CGFloat] = [:]
     /// What each section measured last time it was laid out, which is where a
     /// drag on a section that has never been sized starts from.
-    @ObservationIgnored var measured: [String: CGFloat] = [:]
+    @PerceptionIgnored var measured: [String: CGFloat] = [:]
 
     private let defaults: UserDefaults
 
@@ -86,7 +87,7 @@ struct SectionDivider: View {
 
     static let hitHeight: CGFloat = 7
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         Hairline()
             .overlay {
                 Rectangle()
@@ -128,7 +129,7 @@ struct SectionDivider: View {
                              zh: "拖动以调整上方分区的高度；双击恢复它原本的高度。"))
             }
             .zIndex(1)
-    }
+    } }
 }
 
 /// Whether the content is inside a section the user has sized, and so may
@@ -156,7 +157,7 @@ private struct SectionSizing: ViewModifier {
     let measuredTotal: (CGFloat) -> Void
     @State private var store = SectionLayoutStore.shared
 
-    func body(content: Content) -> some View {
+    func body(content: Content) -> some View { WithPerceptionTracking {
         if let total = store.height(key) {
             let h = max(total - header, 0)
             // First the content at its own size, top-aligned in the height it
@@ -171,10 +172,10 @@ private struct SectionSizing: ViewModifier {
             .environment(\.sectionSized, true)
         } else {
             content
-                .background(GeometryReader { g in
+                .background(GeometryReader { g in WithPerceptionTracking {
                     Color.clear.onAppear { measuredTotal(g.size.height + header) }
                         .onChange(of: g.size.height) { _, v in measuredTotal(v + header) }
-                })
+                } })
         }
-    }
+    } }
 }

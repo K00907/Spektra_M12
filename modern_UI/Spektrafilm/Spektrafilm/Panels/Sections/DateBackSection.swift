@@ -23,9 +23,10 @@
 //  engine work before it is a control.
 
 import SwiftUI
+import Perception
 
 struct DateBackSection: View {
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
     static let key = "dateBack"
     private var date: DateBackSettings { session.params.dateBack }
@@ -41,7 +42,7 @@ struct DateBackSection: View {
     private func onCamera(_ face: DateBackFace) -> Bool { camera?.draws(face) ?? false }
     private var cameraHasBack: Bool { DateBackFace.allCases.contains(where: draws) }
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionDateBack), key: Self.key, initiallyExpanded: false,
                      note: date.active ? nil : L(.edgeOff),
                      foldedNote: summary,
@@ -104,7 +105,7 @@ struct DateBackSection: View {
                         because: cameraHasBack ? L("Switch Date Back on in its header.", zh: "先在标题栏开启日期后背。")
                                                : noBackReason)
         }
-    }
+    } }
 
     // MARK: rows
 
@@ -120,12 +121,12 @@ struct DateBackSection: View {
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 Menu {
-                    ForEach(DateBackOrder.allCases) { order in
+                    ForEach(DateBackOrder.allCases) { order in WithPerceptionTracking {
                         Button { set(\.order, order) } label: {
                             let line = "\(example(order))  ·  \(L(order.key))"
                             if order == date.order { Label(line, systemImage: "checkmark") } else { Text(line) }
                         }
-                    }
+                    } }
                 } label: {
                     HStack(spacing: 0) {
                         Text(printed.isEmpty ? "—" : printed).font(Theme.Font.label).foregroundStyle(Theme.text)
@@ -278,13 +279,13 @@ struct DateBackSection: View {
 private struct CornerPad: View {
     @Binding var selection: DateBackCorner
 
-    var body: some View {
-        GeometryReader { geo in
+    var body: some View { WithPerceptionTracking {
+        GeometryReader { geo in WithPerceptionTracking {
             let w = geo.size.width, h = geo.size.height
             ZStack {
                 RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Theme.plot)
                 RoundedRectangle(cornerRadius: 4, style: .continuous).strokeBorder(Theme.pill, lineWidth: 1)
-                ForEach(DateBackCorner.allCases) { corner in
+                ForEach(DateBackCorner.allCases) { corner in WithPerceptionTracking {
                     let on = corner == selection
                     let x = corner == .bl || corner == .tl ? 8 : w - 8
                     let y = corner == .tl || corner == .tr ? 8 : h - 8
@@ -299,8 +300,8 @@ private struct CornerPad: View {
                         .onTapGesture { selection = corner }
                         .accessibilityLabel(corner.rawValue)
                         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
-                }
+                } }
             }
-        }
-    }
+        } }
+    } }
 }

@@ -8,6 +8,7 @@
 //  stocks (`StockList` fills a section the user has sized).
 
 import SwiftUI
+import Perception
 
 struct FilmSection: View {
     /// Rows of the film list on screen before it scrolls, while the section
@@ -16,9 +17,9 @@ struct FilmSection: View {
     /// group whole and the Negative group's first rows.
     static let wellRows = 9
 
-    @Bindable var session: Session
+    @Perception.Bindable var session: Session
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         PanelSection(L(.sectionFilm), key: "film",
                      // The reset arrow's scope is a *named* stock, and a film
                      // name is a profile name — the spec keeps those as they
@@ -36,7 +37,7 @@ struct FilmSection: View {
                 select(id)
             }
         }
-    }
+    } }
 
     /// Positive and Negative, as two visible groups — v3's own division, and
     /// taken from the catalogue's `type` rather than from the artwork's order
@@ -142,15 +143,15 @@ struct StockList: View {
     /// whatever height it is offered, at least its own rows.
     @Environment(\.sectionSized) private var sized
 
-    var body: some View {
-        ScrollViewReader { proxy in
+    var body: some View { WithPerceptionTracking {
+        ScrollViewReader { proxy in WithPerceptionTracking {
             // `showsIndicators: true`: v3 draws a 3.04 pt thumb beside each
             // group, and unlike the old well — whose plate told you where the
             // list ended — a list sitting straight on the rail has no other
             // edge to say that it scrolls.
             ScrollView(.vertical) {
                 VStack(spacing: 0) {
-                    ForEach(rows) { row in
+                    ForEach(rows) { row in WithPerceptionTracking {
                         if row.isHeader {
                             Text(row.name)
                                 .font(Theme.Font.stockGroup)
@@ -162,7 +163,7 @@ struct StockList: View {
                             StockRow(row: row, selected: row.id == selected) { select(row.id) }
                                 .id(row.id)
                         }
-                    }
+                    } }
                 }
             }
             .scrollIndicators(.visible)
@@ -171,7 +172,7 @@ struct StockList: View {
                 guard let new else { return }
                 withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(new, anchor: .center) }
             }
-        }
+        } }
         // A whole number of rows, and **no vertical padding**: the old 8 pt
         // existed to hold the rows off a corner radius that no longer exists,
         // and with the plate gone it is just a gap that makes the list's top
@@ -181,7 +182,7 @@ struct StockList: View {
         .frame(minHeight: Theme.Metric.listRowHeight * CGFloat(sized ? 2 : visibleRows),
                maxHeight: sized ? .infinity : Theme.Metric.listRowHeight * CGFloat(visibleRows))
         .background(Theme.stockList)
-    }
+    } }
 }
 
 struct StockRow: View {
@@ -189,7 +190,7 @@ struct StockRow: View {
     let selected: Bool
     let action: () -> Void
 
-    var body: some View {
+    var body: some View { WithPerceptionTracking {
         // A plain view with a tap gesture, not a `Button`. macOS gives even a
         // `.plain` button a shape of its own on this release, and it was
         // drawing a rounded plate inside the mark — a second selection mark,
@@ -218,7 +219,7 @@ struct StockRow: View {
         .frame(minHeight: Theme.Metric.listRowHeight)
         .background(alignment: .leading) {
             if selected {
-                GeometryReader { geo in
+                GeometryReader { geo in WithPerceptionTracking {
                     RoundedRectangle(cornerRadius: Theme.Metric.stockSelectionRadius,
                                      style: .continuous)
                         .fill(Theme.selection)
@@ -228,14 +229,14 @@ struct StockRow: View {
                                height: markHeight(geo.size.height))
                         .offset(x: Theme.Metric.stockLeadingInset,
                                 y: (geo.size.height - markHeight(geo.size.height)) / 2)
-                }
+                } }
             }
         }
         .contentShape(Rectangle())
         .onTapGesture(perform: action)
         .rowEnabled(row.enabled, because: row.disabledReason)
         .help(row.help)
-    }
+    } }
 
     /// The selection capsule: the drawing's 15.27 in an 18 pt row, and the
     /// same margin in a row that wrapped to two lines.
