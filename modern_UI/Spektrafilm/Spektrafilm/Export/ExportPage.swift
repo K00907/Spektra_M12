@@ -461,7 +461,7 @@ struct ExportPage: View {
                 .background(Theme.well, in: Capsule())
                 .contentShape(Capsule())
         }
-        .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+        .menuStyle(.borderlessButton).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
         .disabled(mode != .viewer)
         .opacity(mode == .viewer ? 1 : 0.4)
     }
@@ -855,8 +855,10 @@ struct ExportPage: View {
     private var tokenRow: some View {
         // Wraps (2026-09-28): the chips' words are in full now, and four of
         // them are wider than the row at a large interface scale.
-        FlowLayout(spacing: M.chipSpacing, lineSpacing: 3) {
-            ForEach(recipe.wrappedValue.naming.chips) { t in WithPerceptionTracking { tokenChip(t) } }
+        // macOS 12: `FlowLayout` is a `Layout` (macOS 13); `FlowRow` wraps the
+        // same way from measured sizes.
+        FlowRow(items: recipe.wrappedValue.naming.chips, spacing: M.chipSpacing, lineSpacing: 3) { t in
+            tokenChip(t)
         }
     }
 
@@ -882,12 +884,20 @@ struct ExportPage: View {
             .help(on && last ? L("A filename needs at least one part", zh: "文件名至少需要一个部分")
                   : (on ? L("Remove \(t.helpName) from the filename", zh: "从文件名中移除\(tokenName(t))")
                       : L("Add \(t.helpName) to the filename", zh: "将\(tokenName(t))加入文件名")))
-            .draggable(t.rawValue)
-            .dropDestination(for: String.self) { items, _ in
-                guard let raw = items.first, let moving = NameToken(rawValue: raw) else { return false }
-                var n = recipe.wrappedValue.naming
-                n.move(moving, before: t)
-                recipe.wrappedValue.naming = n
+            // macOS 12: `.draggable` / `.dropDestination` (Transferable) are
+            // macOS 13; the same string goes through an item provider.
+            .onDrag { NSItemProvider(object: t.rawValue as NSString) }
+            .onDrop(of: [UTType.utf8PlainText], isTargeted: nil) { providers in
+                guard let provider = providers.first else { return false }
+                Task { @MainActor in
+                    let item = try? await provider.loadItem(forTypeIdentifier: UTType.utf8PlainText.identifier)
+                    let raw: String? = (item as? Data).flatMap { String(data: $0, encoding: .utf8) }
+                        ?? (item as? String) ?? (item as? NSString).map { $0 as String }
+                    guard let raw, let moving = NameToken(rawValue: raw) else { return }
+                    var n = recipe.wrappedValue.naming
+                    n.move(moving, before: t)
+                    recipe.wrappedValue.naming = n
+                }
                 return true
             }
     }
@@ -1329,7 +1339,7 @@ struct ExportPage: View {
                 .overlay(alignment: .bottom) { proofCaption }
             }
             .onAppear { paneSize = geo.size }
-            .onChange(of: geo.size) { _, s in paneSize = s }
+            .onChangeCompat(of: geo.size) { _, s in paneSize = s }
         } }
         .transition(.opacity)
     }
@@ -1972,7 +1982,7 @@ private struct PillField<MenuContent: View>: View {
             .background(Theme.pill, in: Capsule())
             .contentShape(Capsule())
         }
-        .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden)
+        .menuStyle(.borderlessButton).buttonStyle(.plain).menuIndicator(.hidden)
         .disabled(dimmed)
         .help(help ?? "")
     } }
@@ -2067,7 +2077,7 @@ enum OpenWithCatalog {
         let ext = format.ext
         if let hit = cache[ext] { apps = hit; return }
         let probe = FileManager.default.temporaryDirectory
-            .appending(path: "spektralab-openwith-probe.\(ext)")
+            .appendingPathComponent("spektralab-openwith-probe.\(ext)")
         FileManager.default.createFile(atPath: probe.path, contents: Data())
         defer { try? FileManager.default.removeItem(at: probe) }
         let list = NSWorkspace.shared.urlsForApplications(toOpen: probe)

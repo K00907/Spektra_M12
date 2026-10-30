@@ -8,6 +8,7 @@
 import SwiftUI
 import Perception
 
+@available(macOS 13, *)
 struct FlowLayout: Layout {
     var spacing: CGFloat = 2
     var lineSpacing: CGFloat = 3

@@ -494,7 +494,7 @@ final class Log: @unchecked Sendable {
         endSession()   // a second start in one process replaces the first
         previousSessionBox.value = nil
         let now = clock()
-        let file = destination.appending(path: "\(LogCleanup.sessionPrefix)\(LogTime.fileStamp(now))-\(ProcessInfo.processInfo.processIdentifier).jsonl")
+        let file = destination.appendingPathComponent("\(LogCleanup.sessionPrefix)\(LogTime.fileStamp(now))-\(ProcessInfo.processInfo.processIdentifier).jsonl")
         let sink = LogFileSink(directory: destination, sessionFile: file, retention: retention)
         state.withLock {
             $0.level = level

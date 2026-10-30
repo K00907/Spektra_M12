@@ -43,82 +43,41 @@ struct SpektrafilmApp: App {
     private let snapshot = SnapshotRequest.parse(CommandLine.arguments)
 
     var body: some Scene {
-        Window("SpektraLab", id: "editor") {
-            EditorWindow(session: session)
-                .id(InterfaceScaleStore.shared.scale)
-                .environment(\.snapshotMode, snapshot != nil)
-                // The capture is of its own window (`runSnapshot`), not this one.
-                .environment(\.snapshotCapture, false)
-                .frame(minWidth: Theme.Metric.minWindow.width, minHeight: Theme.Metric.minWindow.height)
+        // macOS 12: `Window` scenes, `defaultSize` and `openWindow` are all
+        // macOS 13. The editor is the app's one `WindowGroup` — `.newItem` is
+        // replaced below, so nothing offers a second one, and external events
+        // (a file opened from the Finder) go to the delegate rather than to a
+        // new window. About, Settings and Export are made by `AuxWindows`.
+        WindowGroup("SpektraLab") {
+            WithPerceptionTracking {
+                EditorWindow(session: session)
+                    .id(InterfaceScaleStore.shared.scale)
+                    .environment(\.snapshotMode, snapshot != nil)
+                    // The capture is of its own window (`runSnapshot`), not this one.
+                    .environment(\.snapshotCapture, false)
+                    .frame(minWidth: Theme.Metric.minWindow.width, minHeight: Theme.Metric.minWindow.height)
+            }
         }
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unifiedCompact)
-        .defaultSize(width: 1920, height: 1080)
+        .handlesExternalEvents(matching: [])
         .commands { EditorCommands(session: session) }
-
-        // Not decoration: two of the three licences the bundle carries
-        // require something visible, and CC BY-SA 4.0 names an About screen
-        // by example as a place the attribution has to survive. See
-        // `AboutWindow`.
-        Window("About SpektraLab", id: "about") {
-            AboutWindow()
-        }
-        .windowResizability(.contentSize)
-        .defaultPosition(.center)
-
-        // **Not a `Settings` scene.** It is the obvious way to get the app
-        // menu's "Settings…" item for free, and in this app it stops SwiftUI
-        // from ever creating the *editor* window. Bisected: with a `Settings`
-        // scene the app has one window at the boot handover (the boot window)
-        // and the `Window("SpektraLab", id: "editor")` scene's window is never
-        // made; without it there are two, the second being SwiftUI's
-        // `TUINSWindow`. The app launched to a boot screen that never went
-        // away.
-        //
-        // So the page is an ordinary `Window` and the menu item is declared
-        // by hand in `EditorCommands` via `CommandGroup(replacing: .appSettings)`,
-        // which puts it in the same place with the same ⌘, shortcut.
-        // `RFC-016 §6` is what the page itself is for.
-        Window("Settings", id: "settings") {
-            SettingsWindow(session: session)
-                .id(InterfaceScaleStore.shared.scale)
-        }
-        .windowResizability(.contentSize)
-        .defaultPosition(.center)
-
-        // The export page, as a window rather than the sheet it used to be
-        // (RFC-018 §6). Sizing is left free — the page is three cards and a
-        // picture, and it has a minimum of its own — and the editor opens it
-        // through `ExportWindowID.scene` when something asks for an export.
-        Window("Export", id: ExportWindowID.scene) {
-            ExportWindow(session: session)
-                .id(InterfaceScaleStore.shared.scale)
-        }
-        .windowStyle(.hiddenTitleBar)
-        .windowToolbarStyle(.unifiedCompact)
-        // The drawing's own window size, so what opens is what was drawn.
-        .defaultSize(width: Theme.Metric.Export.width, height: Theme.Metric.Export.height)
-        .defaultPosition(.center)
     }
 }
 
 struct EditorCommands: Commands {
     let session: Session
-    /// `openWindow` reaches the "about" scene declared above. A `Commands`
-    /// struct can read the environment; a plain `Button` action cannot open a
-    /// scene any other way.
-    @Environment(\.openWindow) private var openWindow
 
-    private func openAbout() { openWindow(id: "about") }
+    private func openAbout() { AuxWindows.shared.open(.about) }
 
-    var body: some Commands {
+    var body: some Commands { WithPerceptionTracking {
         CommandGroup(replacing: .appInfo) {
             Button("About SpektraLab") { openAbout() }
         }
         // Hand-declared because the page is a `Window` and not a `Settings`
         // scene — see the comment on that scene. Same slot, same shortcut.
         CommandGroup(replacing: .appSettings) {
-            Button("Settings…") { openWindow(id: "settings") }
+            Button("Settings…") { AuxWindows.shared.open(.settings) }
                 .keyboardShortcut(",", modifiers: .command)
         }
         CommandGroup(replacing: .newItem) {
@@ -254,7 +213,7 @@ struct EditorCommands: Commands {
             Button("Hand") { session.tool = .hand }.keyboardShortcut("h", modifiers: [])
             Button("Crop") { session.tool = .crop }.keyboardShortcut("c", modifiers: [])
         }
-    }
+    } }
 }
 
 struct SnapshotRequest {
@@ -378,6 +337,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// single-key shortcuts (`TypingKeyGuard`).
     private var typingKeyGuard: Any?
 
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // One editor window; a window tab bar would offer a second.
+        NSWindow.allowsAutomaticWindowTabbing = false
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         typingKeyGuard = TypingKeyGuard.install()
         // First statement, before anything else can want to log: `start()`
@@ -446,7 +410,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func waitForNativeOriginal(_ session: Session) async {
         let deadline = Date().addingTimeInterval(5)
         while session.nativeOriginalInFlight, Date() < deadline {
-            try? await Task.sleep(for: .milliseconds(50))
+            try? await Task.sleep(ms: (50))
         }
     }
 
@@ -507,7 +471,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // window's first row and cannot be collapsed, so no view reads that
         // flag. The stored property stays for one release so a preferences
         // file written by an older build still decodes.
-        try? await Task.sleep(for: .milliseconds(300))
+        try? await Task.sleep(ms: (300))
         if let open = req.open {
             session.open(urls: [open])
             // Opening a *folder* lands the app in Browse with nothing chosen,
@@ -538,7 +502,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let deadline = Date().addingTimeInterval(req.wait)
         while Date() < deadline {
-            try? await Task.sleep(for: .milliseconds(200))
+            try? await Task.sleep(ms: (200))
             if req.open == nil { if Date() > deadline.addingTimeInterval(-req.wait + 1.0) { break } }
             // A live service session id, not the sidecar's `state`: a frame
             // edited in an earlier run is `.processed` on disk before this run
@@ -547,13 +511,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     let sel = session.selection, !session.busy,
                     session.frameStates[sel] == .processed { break }
         }
-        try? await Task.sleep(for: .milliseconds(400))
+        try? await Task.sleep(ms: (400))
         if let z = req.pairZoom, let side = session.pairLayer.side, let hole = session.pairHoleRects[side] {
             session.togglePairPlacing()
             // Off the hole's middle, so a zoom that drifts shows.
             let at = CGPoint(x: hole.minX + 0.3 * hole.width, y: hole.minY + 0.35 * hole.height)
             _ = session.placementZoomed(by: z.factor, at: at)
-            try? await Task.sleep(for: .milliseconds(Int(z.wait * 1000)))
+            try? await Task.sleep(ms: (Int(z.wait * 1000)))
         }
         if let m = req.mask {
             session.addMask(m.kind)
@@ -562,11 +526,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 session.selectedMask = mask
             }
             session.maskOverlayVisible = m.overlay
-            try? await Task.sleep(for: .milliseconds(300))
+            try? await Task.sleep(ms: (300))
         }
         if let g = req.geometry {
             session.geometry = g.fitted(in: session.sourceImageSize)
-            try? await Task.sleep(for: .milliseconds(300))
+            try? await Task.sleep(ms: (300))
         }
         if let position = req.compare {
             session.comparePosition = position
@@ -584,10 +548,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // current grade, which the settle after the last edit started.
             let deadline = Date().addingTimeInterval(90)
             while Date() < deadline {
-                try? await Task.sleep(for: .milliseconds(250))
+                try? await Task.sleep(ms: (250))
                 if !session.fullPending, session.canvasIsSettled { break }
             }
-            try? await Task.sleep(for: .milliseconds(400))
+            try? await Task.sleep(ms: (400))
         }
         host.frame = CGRect(origin: .zero, size: req.size)
         host.layoutSubtreeIfNeeded()

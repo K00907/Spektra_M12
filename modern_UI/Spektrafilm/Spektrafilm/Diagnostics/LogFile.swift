@@ -77,7 +77,7 @@ enum LogCleanup {
             .filter { name in
                 name.hasSuffix(".jsonl") && sessionPrefixes.contains { name.hasPrefix($0) }
             }
-            .map { directory.appending(path: $0) }
+            .map { directory.appendingPathComponent($0) }
             .sorted { modificationDate($0, fileManager) > modificationDate($1, fileManager) }
     }
 
@@ -157,7 +157,7 @@ enum LogCleanup {
         where file.lastPathComponent != keeping?.lastPathComponent {
             delete(file, &outcome, fileManager)
         }
-        let link = directory.appending(path: "latest.jsonl")
+        let link = directory.appendingPathComponent("latest.jsonl")
         if FileManager.default.fileExists(atPath: link.path)
             || (try? fileManager.destinationOfSymbolicLink(atPath: link.path)) != nil {
             try? fileManager.removeItem(at: link)
@@ -360,7 +360,7 @@ final class LogFileSink: LogSink, @unchecked Sendable {
     /// `latest.jsonl` → this session's file. A relative destination, so the
     /// link still resolves if the directory is moved or synced somewhere else.
     private func linkLatest(_ fileManager: FileManager) {
-        let link = directory.appending(path: "latest.jsonl")
+        let link = directory.appendingPathComponent("latest.jsonl")
         try? fileManager.removeItem(at: link)
         try? fileManager.createSymbolicLink(atPath: link.path,
                                             withDestinationPath: sessionFile.lastPathComponent)

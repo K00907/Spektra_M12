@@ -127,7 +127,7 @@ struct CurveEditor: View {
                     .onEnded { _ in dragging = nil }
             )
             .simultaneousGesture(TapGesture(count: 2).onEnded { setCurve(.identity) })
-            .onContinuousHover { phase in
+            .onContinuousHoverCompat { phase in
                 switch phase {
                 case .active(let p): hover = unitClamped(p, size)
                 case .ended: hover = nil

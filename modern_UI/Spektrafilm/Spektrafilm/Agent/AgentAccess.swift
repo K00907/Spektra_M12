@@ -31,7 +31,7 @@ enum AgentAccess {
     /// Where Install puts the command. `~/.local/bin` needs no administrator
     /// password and is on the PATH of most shells set up for developer tools.
     static var installURL: URL {
-        FileManager.default.homeDirectoryForCurrentUser.appending(path: ".local/bin/spektralab")
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".local/bin/spektralab")
     }
 
     /// The command is a two-line script, not a symlink to the executable.

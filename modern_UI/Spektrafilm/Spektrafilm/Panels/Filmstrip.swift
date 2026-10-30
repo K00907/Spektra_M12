@@ -73,7 +73,7 @@ struct Filmstrip: View {
                     .padding(.horizontal, 10)
                     .frame(height: Theme.Metric.filmstripHeight)
                 }
-                .onChange(of: session.selection) { _, new in
+                .onChangeCompat(of: session.selection) { _, new in
                     if let new { withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(new, anchor: .center) } }
                 }
             } }

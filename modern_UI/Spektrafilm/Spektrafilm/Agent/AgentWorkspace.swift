@@ -35,7 +35,7 @@ final class AgentWorkspace {
             if Date() > deadline {
                 throw AgentError.failed("Timed out waiting for \(what). \(session.lastError ?? session.status)")
             }
-            try await Task.sleep(for: .milliseconds(40))
+            try await Task.sleep(ms: (40))
         }
     }
 
@@ -217,7 +217,7 @@ final class AgentWorkspace {
     func preview(to out: URL? = nil, longEdge: Int = 1024) async throws -> URL {
         guard (64...4096).contains(longEdge) else { throw AgentError.refused("The long edge must be within 64…4096.") }
         try await develop()
-        let dir = FileManager.default.temporaryDirectory.appending(path: "spektralab-preview-\(UUID().uuidString)")
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("spektralab-preview-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: dir) }
         var recipe = ExportRecipe()
         recipe.name = "Agent preview"
@@ -231,7 +231,7 @@ final class AgentWorkspace {
         let files = try await write(recipe)
         guard let file = files.first else { throw AgentError.failed("The preview wrote nothing.") }
         let target = out ?? FileManager.default.temporaryDirectory
-            .appending(path: "spektralab-\(url?.deletingPathExtension().lastPathComponent ?? "preview")-\(UUID().uuidString.prefix(8)).jpg")
+            .appendingPathComponent("spektralab-\(url?.deletingPathExtension().lastPathComponent ?? "preview")-\(UUID().uuidString.prefix(8)).jpg")
         try? FileManager.default.removeItem(at: target)
         try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
         try FileManager.default.moveItem(at: file, to: target)

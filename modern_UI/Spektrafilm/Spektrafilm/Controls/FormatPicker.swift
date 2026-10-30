@@ -80,7 +80,7 @@ struct PillMenu<T: Hashable>: View {
                 .background(plate, in: Capsule())
                 .contentShape(Capsule())
             }
-            .menuStyle(.button)
+            .menuStyle(.borderlessButton)
             .buttonStyle(.plain)
             .menuIndicator(.hidden)
             .fixedSize(horizontal: false, vertical: false)
@@ -161,7 +161,7 @@ struct UnitField: View {
                 .background(Theme.pill, in: Capsule())
                 .contentShape(Capsule())
             }
-            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+            .menuStyle(.borderlessButton).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
             }
             .frame(width: Theme.Metric.pickerWidth)
         }
@@ -182,7 +182,7 @@ struct UnitField: View {
                     .foregroundStyle(Theme.text)
                     .focused($focused)
                     .onSubmit { commit() }
-                    .onChange(of: focused) { _, f in if !f { commit() } }
+                    .onChangeCompat(of: focused) { _, f in if !f { commit() } }
             } else {
                 Text(shown)
                     .font(Theme.Font.value)

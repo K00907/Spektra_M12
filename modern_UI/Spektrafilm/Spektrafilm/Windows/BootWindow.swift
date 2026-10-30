@@ -135,7 +135,7 @@ final class BootWindowController {
             while Date() < deadline {
                 if session.booted { break }
                 if case .failed = session.bootPhase { break }
-                try? await Task.sleep(for: .milliseconds(60))
+                try? await Task.sleep(ms: (60))
             }
             self?.reveal()
         }
@@ -161,6 +161,18 @@ final class BootWindowController {
                 .init("windows", NSApp.windows.count),
             ])
             return
+        }
+        // macOS 12: a `WindowGroup` has no `.defaultSize` (macOS 13), so the
+        // first launch gives the editor the size upstream declares — 1920 ×
+        // 1080, or the screen's visible area if that is smaller. After that
+        // AppKit restores whatever frame the person left it at.
+        let sizedKey = Session.uiKey + "intel.editorSized"
+        if !UserDefaults.standard.bool(forKey: sizedKey), let screen = target.screen ?? NSScreen.main {
+            let visible = screen.visibleFrame
+            let size = NSSize(width: min(1920, visible.width), height: min(1080, visible.height))
+            target.setFrame(NSRect(x: visible.midX - size.width / 2, y: visible.midY - size.height / 2,
+                                   width: size.width, height: size.height), display: true)
+            UserDefaults.standard.set(true, forKey: sizedKey)
         }
         target.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)

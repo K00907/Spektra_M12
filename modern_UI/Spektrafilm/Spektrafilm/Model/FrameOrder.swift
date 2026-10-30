@@ -11,7 +11,7 @@ import CryptoKit
 import Foundation
 
 enum FrameOrder {
-    nonisolated static var storeDirectory: URL { Sidecar.storeDirectory.appending(path: "Order") }
+    nonisolated static var storeDirectory: URL { Sidecar.storeDirectory.appendingPathComponent("Order") }
 
     /// The one folder a set of frames is from, or nil for a set drawn from
     /// several (an order is a folder's). A pair is a file in the store and is
@@ -25,7 +25,7 @@ enum FrameOrder {
     nonisolated static func url(for folder: URL) -> URL {
         let path = folder.standardizedFileURL.path
         let hex = SHA256.hash(data: Data(path.utf8)).compactMap { String(format: "%02x", $0) }.joined().prefix(16)
-        return storeDirectory.appending(path: "\(folder.lastPathComponent)-\(hex).order.json")
+        return storeDirectory.appendingPathComponent("\(folder.lastPathComponent)-\(hex).order.json")
     }
 
     /// Keep `frames` as their folder's order. A failure is not reported: the

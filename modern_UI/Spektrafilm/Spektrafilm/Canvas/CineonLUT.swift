@@ -219,7 +219,7 @@ enum CineonLUT {
     static func copyBeside(directory: URL) throws -> [URL] {
         var written: [URL] = []
         for target in Target.allCases {
-            let url = directory.appending(path: target.fileName)
+            let url = directory.appendingPathComponent(target.fileName)
             guard !FileManager.default.fileExists(atPath: url.path) else { continue }
             guard let source = bundled(target) else { continue }
             try FileManager.default.copyItem(at: source, to: url)
@@ -259,7 +259,7 @@ enum CineonLUT {
         d.pixelFormat = .rgba16Float
         d.width = n; d.height = n; d.depth = n
         d.usage = .shaderRead
-        d.storageMode = .shared
+        d.storageMode = GPUStorage.cpuTexture   // .shared needs an Apple GPU
         guard let t = device.makeTexture(descriptor: d) else { return nil }
         half.withUnsafeBytes {
             t.replace(region: MTLRegionMake3D(0, 0, 0, n, n, n), mipmapLevel: 0, slice: 0,

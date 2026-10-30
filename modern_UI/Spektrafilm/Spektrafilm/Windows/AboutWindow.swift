@@ -24,7 +24,7 @@ struct AboutWindow: View {
     struct Licence: Identifiable, Hashable {
         let id: String       // the file name
         let title: String
-        var url: URL? { AboutWindow.licenceDirectory?.appending(path: id) }
+        var url: URL? { AboutWindow.licenceDirectory?.appendingPathComponent(id) }
         var body: String {
             (url.flatMap { try? String(contentsOf: $0, encoding: .utf8) })
                 ?? "\(id) is missing from this build. Run Tools/bundle-licenses.sh."

@@ -230,12 +230,12 @@ actor EngineClient {
         var url = bundle.bundleURL
         for _ in 0..<8 {
             url.deleteLastPathComponent()
-            let candidate = url.appending(path: "engine/resources")
-            if FileManager.default.fileExists(atPath: candidate.appending(path: "spektrafilm_constants.bin").path) {
+            let candidate = url.appendingPathComponent("engine/resources")
+            if FileManager.default.fileExists(atPath: candidate.appendingPathComponent("spektrafilm_constants.bin").path) {
                 return candidate
             }
         }
-        return bundle.bundleURL.appending(path: "Contents/Resources/Resources/engine")
+        return bundle.bundleURL.appendingPathComponent("Contents/Resources/Resources/engine")
     }
 
     /// True when the engine is reading its resources from the app bundle
@@ -249,7 +249,7 @@ actor EngineClient {
     func start() throws {
         guard state != .running, state != .starting else { return }
         state = .starting
-        let constants = resources.appending(path: "spektrafilm_constants.bin")
+        let constants = resources.appendingPathComponent("spektrafilm_constants.bin")
         guard FileManager.default.fileExists(atPath: constants.path) else {
             let why = "the engine's resources are missing at \(resources.path); "
                     + "run engine/build.sh bundle"

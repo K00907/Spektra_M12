@@ -218,7 +218,7 @@ struct ScrubSlider: View {
                     .foregroundStyle(Theme.text)
                     .focused($focused)
                     .onSubmit { commitText() }
-                    .onChange(of: focused) { _, f in if !f { commitText() } }
+                    .onChangeCompat(of: focused) { _, f in if !f { commitText() } }
             } else {
                 Text(format(value))
                     .font(m.valueFont)

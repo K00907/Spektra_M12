@@ -142,7 +142,7 @@ struct DateBackSection: View {
                     .background(Theme.pill, in: Capsule())
                     .contentShape(Capsule())
                 }
-                .menuStyle(.button)
+                .menuStyle(.borderlessButton)
                 .buttonStyle(.plain)
                 .menuIndicator(.hidden)
                 .fixedSize()

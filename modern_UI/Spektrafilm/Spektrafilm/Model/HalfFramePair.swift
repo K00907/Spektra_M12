@@ -249,7 +249,7 @@ struct HalfFramePair: Codable, Equatable, Sendable {
     // MARK: - the store
 
     /// Next to the sidecars, so a test's redirected store carries it along.
-    nonisolated static var storeDirectory: URL { Sidecar.storeDirectory.appending(path: "Pairs") }
+    nonisolated static var storeDirectory: URL { Sidecar.storeDirectory.appendingPathComponent("Pairs") }
 
     nonisolated static func isPair(_ url: URL) -> Bool { url.pathExtension == fileExtension }
 
@@ -282,7 +282,7 @@ struct HalfFramePair: Codable, Equatable, Sendable {
         let tag = String(format: "%06x", abs(folder.standardizedFileURL.path.hashValueStable) % 0xFFFFFF)
         var n = 1
         while true {
-            let url = storeDirectory.appending(path: "Half-Frame Pair \(n) \(tag).\(fileExtension)")
+            let url = storeDirectory.appendingPathComponent("Half-Frame Pair \(n) \(tag).\(fileExtension)")
             if !FileManager.default.fileExists(atPath: url.path) { return url }
             n += 1
         }

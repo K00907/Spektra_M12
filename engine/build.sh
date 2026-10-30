@@ -83,6 +83,17 @@ check_metallib_target() {
 
 build_metallib() {
   local airs=() m air
+  # Intel port: the math flags are checked against this target first. Should
+  # the compiler refuse `-fmetal-math-mode` for a macOS 12 target, the older
+  # spelling of the same thing (`-fno-fast-math`) is used instead; the engine's
+  # startup probe still checks what the kernels actually do.
+  local probe="$out/.math-flags-probe.metal"
+  printf 'kernel void p(device float* o [[buffer(0)]]) { o[0] = 1.0f; }\n' > "$probe"
+  if ! xcrun -sdk macosx metal "${math_flags[@]}" "${target_flags[@]}" -c "$probe" -o "$out/.probe.air" 2>/dev/null; then
+    echo "build.sh: -fmetal-math-mode is not accepted for macOS $MACOS_MIN; using -fno-fast-math" >&2
+    math_flags=(-fno-fast-math)
+  fi
+  rm -f "$probe" "$out/.probe.air"
   shopt -s nullglob
   for m in "$here"/src/shaders/*.metal; do
     air="$out/$(basename "$m" .metal).air"

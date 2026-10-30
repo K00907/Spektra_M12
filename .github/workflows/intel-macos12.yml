@@ -1,0 +1,143 @@
+# The Intel / macOS 12 port: build SpektraLab for x86_64 Macs on Monterey and
+# publish an ad-hoc-signed DMG.
+#
+# The hosted runner is Apple silicon; Xcode builds the x86_64 slice from it.
+# Nothing here can run the app (no AMD GPU, no macOS 12), so the job's claim
+# is only "it builds, and the binary is what an Intel Mac on 12 can load":
+# every Mach-O x86_64 with minos <= 12, the metallib stamped for macOS 12.
+
+name: Intel macOS 12 build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [intel-macos12]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: intel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 90
+    env:
+      APP_DIR: modern_UI/Spektrafilm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26.6
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app || ls /Applications | grep Xcode
+          xcodebuild -version
+
+      - name: Metal toolchain
+        run: |
+          xcrun -sdk macosx metal --version \
+            || xcodebuild -downloadComponent MetalToolchain
+
+      - name: Engine kernels and resources (metallib for macOS 12)
+        run: engine/build.sh bundle
+
+      - name: Build the app (x86_64, macOS 12)
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          set +e
+          xcodebuild -project Spektrafilm.xcodeproj -scheme Spektrafilm \
+            -configuration Release -destination 'generic/platform=macOS' \
+            -derivedDataPath build/DerivedData \
+            -skipMacroValidation -skipPackagePluginValidation \
+            ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= ENABLE_HARDENED_RUNTIME=NO \
+            build > build.log 2>&1
+          status=$?
+          echo "xcodebuild exit status: $status"
+          echo "::group::errors"
+          grep -E "error:|fatal error" build.log | sed -E 's#^.*/modern_UI/#modern_UI/#' | sort -u | head -400
+          echo "::endgroup::"
+          tail -40 build.log
+          exit $status
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ${{ env.APP_DIR }}/build.log
+          if-no-files-found: ignore
+
+      - name: Check the binary can load on an Intel Mac with macOS 12
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          app=build/DerivedData/Build/Products/Release/SpektraLab.app
+          bad=0
+          /usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "$app/Contents/Info.plist"
+          while IFS= read -r -d '' f; do
+            file -b "$f" | grep -q "Mach-O" || continue
+            archs=$(lipo -archs "$f")
+            minos=$(vtool -show-build "$f" 2>/dev/null | awk '/minos/ {print $2; exit}')
+            echo "${f#"$app/"}: $archs, minos $minos"
+            [[ "$archs" == *x86_64* ]] || { echo "error: $f has no x86_64 slice"; bad=1; }
+            [[ "${minos%%.*}" -le 12 ]] || { echo "error: $f needs macOS $minos"; bad=1; }
+          done < <(find "$app" -type f -print0)
+          while IFS= read -r -d '' f; do
+            major=$(xcrun -sdk macosx metal-readobj --file-headers "$f" | awk '/PlatformMajor:/ {print $2; exit}')
+            echo "${f#"$app/"}: metallib for macOS $major"
+            [[ "$major" -le 12 ]] || { echo "error: $f is stamped for macOS $major"; bad=1; }
+          done < <(find "$app" -name '*.metallib' -print0)
+          echo "linked libraries:"
+          otool -L "$app/Contents/MacOS/SpektraLab"
+          otool -l "$app/Contents/MacOS/SpektraLab" | grep -B1 -A2 LC_LOAD_WEAK_DYLIB | grep name || true
+          exit $bad
+
+      - name: Ad-hoc sign and make the DMG
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          app=build/DerivedData/Build/Products/Release/SpektraLab.app
+          codesign --force --deep --sign - "$app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$app/Contents/Info.plist")
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          staging=build/dmg
+          rm -rf "$staging"; mkdir -p "$staging"
+          cp -R "$app" "$staging/"
+          ln -s /Applications "$staging/Applications"
+          cp -R "$app/Contents/Resources/Resources/Licenses" "$staging/Licences" 2>/dev/null || true
+          cat > "$staging/README-Intel.txt" <<'TXT'
+          SpektraLab — Intel / macOS 12 (Monterey) build
+
+          This is an unofficial build of SpektraLab for Intel Macs on macOS 12,
+          compiled from the source of the official release with the changes on
+          the intel-macos12 branch. It is not signed by Apple.
+
+          First launch: drag SpektraLab into Applications, then in Finder
+          right-click (Control-click) SpektraLab and choose Open, then Open
+          again. Or, in Terminal:
+
+              xattr -dr com.apple.quarantine /Applications/SpektraLab.app
+          TXT
+          dmg="build/SpektraLab-$version-intel-macos12.dmg"
+          hdiutil create -volname "SpektraLab $version Intel" -srcfolder "$staging" -ov -format UDZO "$dmg"
+          echo "DMG=$APP_DIR/$dmg" >> "$GITHUB_ENV"
+          ls -la "$dmg"
+          shasum -a 256 "$dmg"
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpektraLab-intel-macos12
+          path: ${{ env.DMG }}
+
+      - name: Publish as a GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="intel-macos12-v${VERSION}-build${GITHUB_RUN_NUMBER}"
+          gh release create "$tag" "$DMG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "SpektraLab ${VERSION} for Intel Macs (macOS 12+) — build ${GITHUB_RUN_NUMBER}" \
+            --notes "Unofficial Intel (x86_64) build for macOS 12 Monterey or later, from branch intel-macos12 at ${GITHUB_SHA}. Ad-hoc signed: on first launch right-click the app and choose Open."

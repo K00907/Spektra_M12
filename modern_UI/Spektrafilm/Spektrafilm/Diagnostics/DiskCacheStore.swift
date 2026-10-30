@@ -62,7 +62,7 @@ actor DiskCacheStore {
         self.capBytes = capBytes
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         var db: OpaquePointer?
-        let dbURL = root.appending(path: "index.sqlite")
+        let dbURL = root.appendingPathComponent("index.sqlite")
         guard sqlite3_open_v2(dbURL.path, &db,
                               SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX,
                               nil) == SQLITE_OK, let db else {
@@ -129,7 +129,7 @@ actor DiskCacheStore {
         try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(),
                                                 withIntermediateDirectories: true)
         let temporary = destination.deletingLastPathComponent()
-            .appending(path: ".\(destination.lastPathComponent).\(UUID().uuidString).tmp")
+            .appendingPathComponent(".\(destination.lastPathComponent).\(UUID().uuidString).tmp")
         try file.write(to: temporary)
         if FileManager.default.fileExists(atPath: destination.path) {
             _ = try FileManager.default.replaceItemAt(destination, withItemAt: temporary)
@@ -338,8 +338,8 @@ actor DiskCacheStore {
     private func path(for key: CacheKey) -> URL {
         let digest = SHA256.hash(data: Data(encoded(key).utf8))
             .map { String(format: "%02x", $0) }.joined()
-        return root.appending(path: String(digest.prefix(2)))
-            .appending(path: "\(digest).bin")
+        return root.appendingPathComponent(String(digest.prefix(2)))
+            .appendingPathComponent("\(digest).bin")
     }
 
     private func encoded(_ key: CacheKey) -> String {

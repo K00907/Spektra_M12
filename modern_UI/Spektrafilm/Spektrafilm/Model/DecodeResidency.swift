@@ -19,14 +19,14 @@ final class DecodeLease: @unchecked Sendable {
     }
 
     func take() -> DecodedImage? {
-        lock.withLock {
+        lock.withLockCompat {
             defer { image = nil }
             return image
         }
     }
 
     func release() {
-        lock.withLock { image = nil }
+        lock.withLockCompat { image = nil }
     }
 }
 

@@ -393,7 +393,7 @@ extension Session {
     func scheduleLatitudeRefresh() {
         latitude.refreshTask?.cancel()
         latitude.refreshTask = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(250))
+            try? await Task.sleep(ms: (250))
             guard !Task.isCancelled, let self else { return }
             await self.probeLatitude(highlight: self.params.sceneLatitude.highlightPullBack,
                                      shadow: self.params.sceneLatitude.shadowPullBack)

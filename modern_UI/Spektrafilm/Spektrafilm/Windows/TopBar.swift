@@ -233,7 +233,7 @@ struct TopBar: View {
                 .background(Theme.pill, in: Capsule())
                 .contentShape(Capsule())
         }
-        .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+        .menuStyle(.borderlessButton).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
         .help(session.isFit ? "Fitted to the window — \(session.zoomPercent) % (⌘0)"
                             : "Zoom — \(session.zoomPercent) %")
     }

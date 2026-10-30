@@ -19,7 +19,7 @@ struct PairSection: View {
         PanelSection(L("Half-Frame Pair", zh: "半格拼接"), key: Self.key, initiallyExpanded: true) {
             RailRows {
                 VStack(spacing: 2) {
-                    ForEach(PairLayer.allCases, id: \.self) { layerRow($0) }
+                    ForEach(PairLayer.allCases, id: \.self) { layer in WithPerceptionTracking { layerRow(layer) } }
                 }
                 switch session.pairLayer {
                 case .film: filmRows

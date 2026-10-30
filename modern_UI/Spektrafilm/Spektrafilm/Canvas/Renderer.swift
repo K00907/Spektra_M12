@@ -570,7 +570,7 @@ final class Renderer: NSObject {
         d.pixelFormat = .r8Unorm
         d.width = 1; d.height = 1; d.arrayLength = 1
         d.usage = [.shaderRead]
-        d.storageMode = .shared
+        d.storageMode = GPUStorage.cpuTexture   // .shared needs an Apple GPU
         return device.makeTexture(descriptor: d)
     }()
 
@@ -1041,6 +1041,7 @@ extension MTLTexture {
         guard pixelFormat == .rgba16Unorm else { return nil }
         let bpr = width * 8
         var data = Data(count: bpr * height)
+        synchronizeForCPURead()
         data.withUnsafeMutableBytes { raw in
             getBytes(raw.baseAddress!, bytesPerRow: bpr, from: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0)
         }
@@ -1055,6 +1056,7 @@ extension MTLTexture {
     func rgba16Bytes() -> Data {
         let bpr = width * 8
         var data = Data(count: bpr * height)
+        synchronizeForCPURead()
         data.withUnsafeMutableBytes { raw in
             getBytes(raw.baseAddress!, bytesPerRow: bpr, from: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0)
         }

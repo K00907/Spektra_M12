@@ -93,8 +93,8 @@ enum Exporter {
         // this one is used to *describe* a destination, not to claim it.
         recipe.existing = .overwrite
         return recipe.destination(for: source, context: context)
-            ?? source.deletingLastPathComponent().appending(path: "_prints")
-                     .appending(path: "\(source.deletingPathExtension().lastPathComponent).\(format.ext)")
+            ?? source.deletingLastPathComponent().appendingPathComponent("_prints")
+                     .appendingPathComponent("\(source.deletingPathExtension().lastPathComponent).\(format.ext)")
     }
 
     /// One export, and the record of its own making (RFC-016 §3 `export`,
@@ -561,7 +561,7 @@ enum Exporter {
         // leaves a truncated file under the real name — which a `.skip`
         // recipe would then keep forever as "already exists".
         let partial = url.deletingLastPathComponent()
-            .appending(path: ".\(url.lastPathComponent).partial-\(UUID().uuidString.prefix(8))")
+            .appendingPathComponent(".\(url.lastPathComponent).partial-\(UUID().uuidString.prefix(8))")
         defer { try? FileManager.default.removeItem(at: partial) }
         guard let dest = CGImageDestinationCreateWithURL(
             partial as CFURL, format.utType.identifier as CFString, small == nil ? 1 : 2, nil) else {

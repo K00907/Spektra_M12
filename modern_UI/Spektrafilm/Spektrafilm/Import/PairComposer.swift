@@ -153,8 +153,8 @@ enum PairComposer {
     final class Shots: @unchecked Sendable {
         private let lock = NSLock()
         private var known: [String: Shot] = [:]
-        func set(_ shot: Shot, for path: String) { lock.withLock { known[path] = shot } }
-        func shot(for path: String) -> Shot? { lock.withLock { known[path] } }
+        func set(_ shot: Shot, for path: String) { lock.withLockCompat { known[path] = shot } }
+        func shot(for path: String) -> Shot? { lock.withLockCompat { known[path] } }
     }
     static let shots = Shots()
 
@@ -200,7 +200,7 @@ enum PairComposer {
         var capacity = 3
 
         func image(for key: String) -> CIImage? {
-            lock.withLock {
+            lock.withLockCompat {
                 guard let i = entries.firstIndex(where: { $0.key == key }) else { return nil }
                 let hit = entries.remove(at: i)
                 entries.insert(hit, at: 0)
@@ -209,15 +209,15 @@ enum PairComposer {
         }
 
         func keep(_ image: CIImage, for key: String) {
-            lock.withLock {
+            lock.withLockCompat {
                 entries.removeAll { $0.key == key }
                 entries.insert((key, image), at: 0)
                 if entries.count > capacity { entries.removeLast(entries.count - capacity) }
             }
         }
 
-        func removeAll() { lock.withLock { entries.removeAll() } }
-        var count: Int { lock.withLock { entries.count } }
+        func removeAll() { lock.withLockCompat { entries.removeAll() } }
+        var count: Int { lock.withLockCompat { entries.count } }
     }
     static let rendered = Rendered()
 

@@ -53,10 +53,8 @@ import UniformTypeIdentifiers
 
 struct EditorWindow: View {
     @Perception.Bindable var session: Session
-    /// Opening the export page's scene. A `Window` scene is addressed by its
-    /// id from anywhere with the environment, which is how this window hands
-    /// the request on without either of them owning the other.
-    @Environment(\.openWindow) private var openWindow
+    // macOS 12: the export page is opened through `AuxWindows`, not
+    // `openWindow(id:)` (macOS 13).
 
     var body: some View { WithPerceptionTracking {
         // One layout. The window used to switch to a `BrowseView` worklist
@@ -97,10 +95,10 @@ struct EditorWindow: View {
         // still means "an export was asked for" — it is now consumed here
         // rather than presented, so ⌘E, the editor's menu item and the
         // toolbar's button all keep working without knowing the page moved.
-        .onChange(of: session.showExport) { _, wanted in
+        .onChangeCompat(of: session.showExport) { _, wanted in
             guard wanted else { return }
             session.showExport = false
-            openWindow(id: ExportWindowID.scene)
+            AuxWindows.shared.open(.export)
         }
     } }
 
@@ -280,7 +278,7 @@ struct CanvasArea: View {
                                 .blur(radius: 10)
                         }
                 }
-                ForEach(session.canvasBadges, id: \.self) { badge($0) }
+                ForEach(session.canvasBadges, id: \.self) { b in WithPerceptionTracking { badge(b) } }
             }
             .padding(CanvasBadges.inset)
             .allowsHitTesting(false)
@@ -357,8 +355,8 @@ struct SnapshotCanvas: View {
                 if let image { Image(decorative: image, scale: 2).resizable() } else { Theme.ground }
             }
             .onAppear { if capture { session.renderer.needsDraw = { revision &+= 1 } } }
-            .onChange(of: geo.size, initial: true) { _, size in render(size) }
-            .onChange(of: revision) { _, _ in render(geo.size) }
+            .onChangeCompat(of: geo.size, initial: true) { _, size in render(size) }
+            .onChangeCompat(of: revision) { _, _ in render(geo.size) }
         } }
     } }
 

@@ -102,7 +102,7 @@ struct PanelResizeHandle: View {
             }
             .contentShape(Rectangle())
             .onHover { hovering = $0 }
-            .onContinuousHover { phase in
+            .onContinuousHoverCompat { phase in
                 // The cursor is pushed and popped rather than set, so leaving
                 // the strip restores whatever the canvas had — the hand tool's
                 // cursor is the one that notices.

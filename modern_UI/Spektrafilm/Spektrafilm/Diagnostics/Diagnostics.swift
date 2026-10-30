@@ -395,7 +395,7 @@ final class Diagnostics {
     /// model built in a test must not make a directory in the user's home.
     nonisolated static var defaultLogDirectory: URL {
         FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
-            .appending(path: "Logs/SpektraLab")
+            .appendingPathComponent("Logs/SpektraLab")
     }
 
     private enum Keys {

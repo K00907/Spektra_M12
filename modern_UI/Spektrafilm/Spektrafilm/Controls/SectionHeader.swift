@@ -135,7 +135,7 @@ struct SectionHeader: View {
                 Menu { menu() } label: {
                     EllipsisGlyph().frame(width: 15, height: 3).padding(8).contentShape(Rectangle())
                 }
-                .menuStyle(.button)
+                .menuStyle(.borderlessButton)
                 .buttonStyle(.plain)
                 .menuIndicator(.hidden)
                 .fixedSize()
@@ -304,15 +304,11 @@ struct FittingLine: View {
     }
 
     var body: some View { WithPerceptionTracking {
-        LongestThatFits(alignment: alignment) {
-            ForEach(Array(Self.candidates(text).enumerated()), id: \.offset) { _, line in WithPerceptionTracking {
-                Text(line)
-                    .font(.system(size: size * InterfaceScaleStore.shared.scale.factor, weight: .bold))
-                    .foregroundStyle(color)
-                    .lineLimit(1)
-                    .fixedSize()
-            } }
-        }
+        // macOS 12: `LongestThatFits` is a `Layout` (macOS 13), so the line is
+        // chosen by measuring the candidates with the font they are drawn in.
+        LongestLine(candidates: Self.candidates(text),
+                    fontSize: size * InterfaceScaleStore.shared.scale.factor,
+                    color: color, alignment: alignment)
         .clipped()
         .help(text)
     } }
@@ -321,6 +317,7 @@ struct FittingLine: View {
 /// Shows the first subview whose ideal width fits the width it is offered,
 /// or none. Takes all the width it is offered; the rest are parked outside
 /// its bounds, where the `.clipped()` of its user hides them.
+@available(macOS 13, *)
 struct LongestThatFits: Layout {
     var alignment: Alignment = .leading
 

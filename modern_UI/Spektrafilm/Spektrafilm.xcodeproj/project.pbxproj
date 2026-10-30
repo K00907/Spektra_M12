@@ -56,6 +56,15 @@
 			path = "Canvas";
 			sourceTree = "<group>";
 		};
+		1CA9244F84EF31E56EBAB9C7 /* MontereyCompat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MontereyCompat.swift"; sourceTree = "<group>"; };
+		6D237EE883592CEF8E14E9F4 /* Compat */ = {
+			isa = PBXGroup;
+			children = (
+				1CA9244F84EF31E56EBAB9C7 /* MontereyCompat.swift */
+			);
+			path = "Compat";
+			sourceTree = "<group>";
+		};
 		841BAB5289564CFBE151982F /* BeforeAfterIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BeforeAfterIcon.swift"; sourceTree = "<group>"; };
 		1967107938C5043791D8A984 /* ColorWheel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ColorWheel.swift"; sourceTree = "<group>"; };
 		3D5B5D58F46059ECDC219EEF /* CurveEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CurveEditor.swift"; sourceTree = "<group>"; };
@@ -328,6 +337,7 @@
 				7A3683AAE552F19C52489403 /* Agent */,
 				3375270C81BEA0B1B8896473 /* Assets.xcassets */,
 				F2592FDD5EA53DA4A185D88F /* Canvas */,
+				6D237EE883592CEF8E14E9F4 /* Compat */,
 				8BA0238B9B43478A480FB02A /* Controls */,
 				9833FF0C88B97DC106143F45 /* Diagnostics */,
 				88C26DDE74126AA3DF583028 /* Export */,
@@ -603,6 +613,7 @@
 		5D85BEFE331A36C24B5B536E /* Shaders.metal */ = {isa = PBXBuildFile; fileRef = 45A2278A553E7F675C711BDF; };
 		85D1E032EFD5BDC74795F31F /* TextureStore.swift */ = {isa = PBXBuildFile; fileRef = 3596117B90D8381030422780; };
 		9E8CF353A140A91815632E92 /* ViewportState.swift */ = {isa = PBXBuildFile; fileRef = 10D9844F361A8278E8F4736F; };
+		EAA66F89ABF12FE78D09F926 /* MontereyCompat.swift */ = {isa = PBXBuildFile; fileRef = 1CA9244F84EF31E56EBAB9C7; };
 		86CA5E37AE96FD3988B8353B /* BeforeAfterIcon.swift */ = {isa = PBXBuildFile; fileRef = 841BAB5289564CFBE151982F; };
 		AB4FADB19B22ECAFDD97B461 /* ColorWheel.swift */ = {isa = PBXBuildFile; fileRef = 1967107938C5043791D8A984; };
 		19075F383FF3CE86D6F43F55 /* CurveEditor.swift */ = {isa = PBXBuildFile; fileRef = 3D5B5D58F46059ECDC219EEF; };
@@ -736,6 +747,7 @@
 				5D85BEFE331A36C24B5B536E /* Shaders.metal */,
 				85D1E032EFD5BDC74795F31F /* TextureStore.swift */,
 				9E8CF353A140A91815632E92 /* ViewportState.swift */,
+				EAA66F89ABF12FE78D09F926 /* MontereyCompat.swift */,
 				86CA5E37AE96FD3988B8353B /* BeforeAfterIcon.swift */,
 				AB4FADB19B22ECAFDD97B461 /* ColorWheel.swift */,
 				19075F383FF3CE86D6F43F55 /* CurveEditor.swift */,
@@ -970,6 +982,7 @@
 		44672454991CCD80FEA733AF /* Shaders.metal */ = {isa = PBXBuildFile; fileRef = 45A2278A553E7F675C711BDF; };
 		B326A05681DA1C98238F21A8 /* TextureStore.swift */ = {isa = PBXBuildFile; fileRef = 3596117B90D8381030422780; };
 		BED1F75657E8AC18880BA6AC /* ViewportState.swift */ = {isa = PBXBuildFile; fileRef = 10D9844F361A8278E8F4736F; };
+		D4BBE33DEFF931F1E10B1A0A /* MontereyCompat.swift */ = {isa = PBXBuildFile; fileRef = 1CA9244F84EF31E56EBAB9C7; };
 		1F2F3C2DB16D103262458BB6 /* BeforeAfterIcon.swift */ = {isa = PBXBuildFile; fileRef = 841BAB5289564CFBE151982F; };
 		5C385FA2E465B7FBC75946E1 /* ColorWheel.swift */ = {isa = PBXBuildFile; fileRef = 1967107938C5043791D8A984; };
 		A4AA453999EA61AF902538DC /* CurveEditor.swift */ = {isa = PBXBuildFile; fileRef = 3D5B5D58F46059ECDC219EEF; };
@@ -1163,6 +1176,7 @@
 				44672454991CCD80FEA733AF /* Shaders.metal */,
 				B326A05681DA1C98238F21A8 /* TextureStore.swift */,
 				BED1F75657E8AC18880BA6AC /* ViewportState.swift */,
+				D4BBE33DEFF931F1E10B1A0A /* MontereyCompat.swift */,
 				1F2F3C2DB16D103262458BB6 /* BeforeAfterIcon.swift */,
 				5C385FA2E465B7FBC75946E1 /* ColorWheel.swift */,
 				A4AA453999EA61AF902538DC /* CurveEditor.swift */,

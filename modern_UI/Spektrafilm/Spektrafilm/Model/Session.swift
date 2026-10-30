@@ -1026,8 +1026,8 @@ final class Session: CanvasHost {
     // decoded-TIFF caches, which rebuild on demand, so nothing needs
     // migrating and nothing is lost but disk.
     nonisolated static let cacheRoot = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        .appending(path: "com.hanze.spektralab")
-    nonisolated static var diskCacheRoot: URL { cacheRoot.appending(path: "store") }
+        .appendingPathComponent("com.hanze.spektralab")
+    nonisolated static var diskCacheRoot: URL { cacheRoot.appendingPathComponent("store") }
 
     init(renderer: Renderer? = nil, diagnostics: Diagnostics = .shared,
          diskCache: DiskCacheStore? = nil, clipboardDefaults: UserDefaults = .standard) {
@@ -1759,7 +1759,7 @@ final class Session: CanvasHost {
                 }
             }
             if delayMs > 0 {
-                try? await Task.sleep(for: .milliseconds(delayMs))
+                try? await Task.sleep(ms: (delayMs))
                 if let self, self.nativeOriginalToken == token {
                     self.nativeOriginalPendingDelay = false
                 }
@@ -2031,14 +2031,14 @@ final class Session: CanvasHost {
                     guard let image = lease.take() else { throw CancellationError() }
                     return TextureBox(try ImageDecoder.makePreviewTexture(
                         image, device: device, maxEdge: edge,
-                        storageMode: .shared, checkpoint: checkpoint))
+                        storageMode: GPUStorage.cpuTexture, checkpoint: checkpoint))
                 }
             } onCancel: {
                 lease.release()
             }) ?? TextureBox(nil)
         } else {
             preview = TextureBox(ImageDecoder.makePreviewTexture(
-                d, device: device, maxEdge: edge, storageMode: .shared
+                d, device: device, maxEdge: edge, storageMode: GPUStorage.cpuTexture
             ))
             lease.release()
         }
@@ -2580,7 +2580,7 @@ final class Session: CanvasHost {
     // MARK: - the retired decode cache
 
     /// Where the linear-TIFF handoff cache used to live.
-    nonisolated static var legacyLinearCache: URL { cacheRoot.appending(path: "linear") }
+    nonisolated static var legacyLinearCache: URL { cacheRoot.appendingPathComponent("linear") }
 
     /// Delete what the linear-TIFF cache left behind.
     ///
@@ -2703,7 +2703,7 @@ final class Session: CanvasHost {
     private func scheduleReopen() {
         reopenTask?.cancel()
         reopenTask = Task {
-            try? await Task.sleep(for: .milliseconds(350))
+            try? await Task.sleep(ms: (350))
             guard !Task.isCancelled, let url = selection else { return }
             loadTask?.cancel()
             // A develop of the *previous* decode is not the develop of this
@@ -2765,7 +2765,7 @@ final class Session: CanvasHost {
     private func scheduleSave() {
         saveTask?.cancel()
         saveTask = Task {
-            try? await Task.sleep(for: .milliseconds(500))
+            try? await Task.sleep(ms: (500))
             guard !Task.isCancelled else { return }
             flushSave()
         }
@@ -3497,6 +3497,7 @@ final class Session: CanvasHost {
         guard tex.storageMode == .shared || tex.storageMode == .managed else { return nil }
         let x = Int(n.x * CGFloat(tex.width - 1)), y = Int(n.y * CGFloat(tex.height - 1))
         var px = [UInt16](repeating: 0, count: 4)
+        tex.synchronizeForCPURead()
         tex.getBytes(&px, bytesPerRow: 8, from: MTLRegionMake2D(x, y, 1, 1), mipmapLevel: 0)
         return SIMD3(Float(px[0]) / 65535, Float(px[1]) / 65535, Float(px[2]) / 65535)
     }
@@ -3588,7 +3589,7 @@ final class Session: CanvasHost {
         fullGeneration += 1
         let gen = fullGeneration
         fullTask = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(Session.fullRenderDebounceMs))
+            try? await Task.sleep(ms: (Session.fullRenderDebounceMs))
             guard let self, !Task.isCancelled, gen == self.fullGeneration else { return }
             await self.renderFullRender(for: url, sessionID: sid, generation: gen)
         }
@@ -3630,14 +3631,14 @@ final class Session: CanvasHost {
         printWritebackTask?.cancel()
         guard printWriteback != nil else { return }
         printWritebackTask = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(Session.fullRenderDebounceMs))
+            try? await Task.sleep(ms: (Session.fullRenderDebounceMs))
             guard let self else { return }
             while !Task.isCancelled {
                 if !busy && !fullPending && !scheduler.pending {
                     await printWriteback?.drain()
                     if await printWriteback?.isEmpty == true { return }
                 }
-                try? await Task.sleep(for: .milliseconds(200))
+                try? await Task.sleep(ms: (200))
             }
         }
     }
@@ -4091,7 +4092,7 @@ final class Session: CanvasHost {
         workSeconds = 0
         workClock = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(for: .milliseconds(200))
+                try? await Task.sleep(ms: (200))
                 guard let self else { return }
                 if let start = self.workStarted { self.workSeconds = Date().timeIntervalSince(start) }
                 if !self.working { break }
@@ -4382,7 +4383,7 @@ extension Session {
         } else {
             pairExposureTask?.cancel()
             pairExposureTask = Task {
-                try? await Task.sleep(for: .milliseconds(250))
+                try? await Task.sleep(ms: (250))
                 guard !Task.isCancelled, selection == url else { return }
                 releaseEngineFrame()
                 requestPrint()
@@ -4699,7 +4700,7 @@ extension Session {
     private func schedulePlacementCommit() {
         pairPlacementTask?.cancel()
         pairPlacementTask = Task {
-            try? await Task.sleep(for: .milliseconds(280))
+            try? await Task.sleep(ms: (280))
             guard !Task.isCancelled else { return }
             commitPlacement()
         }
@@ -4718,7 +4719,7 @@ extension Session {
         setPlacement(drag.side) { $0 = drag.live }
         // Never left up for good: a develop that fails says so elsewhere.
         pairPlacementTask = Task {
-            try? await Task.sleep(for: .seconds(8))
+            try? await Task.sleep(ms: 8_000)
             guard !Task.isCancelled, pairDrag?.settling == true else { return }
             pairDrag = nil
         }
@@ -5212,7 +5213,7 @@ extension Session {
         pairComposeTask?.cancel()
         pairComposeTask = Task {
             // A drag sets the value dozens of times; one print per pause.
-            try? await Task.sleep(for: .milliseconds(60))
+            try? await Task.sleep(ms: (60))
             guard !Task.isCancelled else { return }
             await composePairRender(last.outcome, generation: last.generation)
         }

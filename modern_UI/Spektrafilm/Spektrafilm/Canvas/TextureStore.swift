@@ -120,25 +120,25 @@ final class TextureStore: @unchecked Sendable {
         self.arena = arena
     }
 
-    func source(for url: URL) -> MTLTexture? { lock.withLock { sources[url] } }
-    func print(for url: URL) -> MTLTexture? { lock.withLock { prints[url]?.texture } }
+    func source(for url: URL) -> MTLTexture? { lock.withLockCompat { sources[url] } }
+    func print(for url: URL) -> MTLTexture? { lock.withLockCompat { prints[url]?.texture } }
     func printEntry(for url: URL) -> (texture: MTLTexture, stamp: String, costMs: Double,
                                       cacheKey: CacheKey?, sourceWidth: Int,
                                       sourceHeight: Int)? {
-        lock.withLock {
+        lock.withLockCompat {
             guard let entry = prints[url] else { return nil }
             return (entry.texture, entry.stamp, entry.costMs, entry.cacheKey,
                     entry.sourceWidth, entry.sourceHeight)
         }
     }
     func fullEntry(for url: URL) -> FullRenderEntry? {
-        lock.withLock { full?.url == url ? full : nil }
+        lock.withLockCompat { full?.url == url ? full : nil }
     }
 
     /// The resident native-resolution render for `url`, if it was made from
     /// `stamp`.
     func fullRender(for url: URL, stamp: String) -> MTLTexture? {
-        lock.withLock {
+        lock.withLockCompat {
             guard let f = full, f.url == url, f.stamp == stamp else { return nil }
             return f.texture
         }
@@ -151,7 +151,7 @@ final class TextureStore: @unchecked Sendable {
     /// references; `MemorySampler`'s fresh free reading is what decides whether
     /// another batch is needed.
     func setSource(_ t: MTLTexture, for url: URL, costMs: Double = 0) {
-        lock.withLock {
+        lock.withLockCompat {
             if let h = sourceHandles.removeValue(forKey: url) { arena.release(h) }
             let slot = HandleSlot()
             let admitted = arena.admitCache(bytes: t.width * t.height * 8,
@@ -173,7 +173,7 @@ final class TextureStore: @unchecked Sendable {
     func setPrint(_ t: MTLTexture?, stamp: String = "", for url: URL, costMs: Double = 0,
                   cacheKey: CacheKey? = nil, sourceWidth: Int? = nil,
                   sourceHeight: Int? = nil) {
-        lock.withLock {
+        lock.withLockCompat {
             if let h = printHandles.removeValue(forKey: url) { arena.release(h) }
             guard let t else {
                 prints[url] = nil
@@ -205,7 +205,7 @@ final class TextureStore: @unchecked Sendable {
     func setFullRender(_ t: MTLTexture, stamp: String, costMs: Double = 0,
                        cacheKey: CacheKey? = nil, sourceWidth: Int? = nil,
                        sourceHeight: Int? = nil, for url: URL) {
-        lock.withLock {
+        lock.withLockCompat {
             if let h = fullHandle { arena.release(h) }
             full = FullRenderEntry(
                 url: url, stamp: stamp, texture: t, costMs: costMs, cacheKey: cacheKey,
@@ -220,10 +220,10 @@ final class TextureStore: @unchecked Sendable {
     /// keeps a resident render an undo landed back on rather than re-rendering
     /// it. (The `unless:`-shaped variant that used to sit here was only ever
     /// called from the branch that had just failed that identical lookup.)
-    func dropFullRender() { lock.withLock { clearFullLocked() } }
-    func invalidatePrint(for url: URL) { lock.withLock { if let h = printHandles.removeValue(forKey: url) { arena.release(h) }; prints[url] = nil } }
+    func dropFullRender() { lock.withLockCompat { clearFullLocked() } }
+    func invalidatePrint(for url: URL) { lock.withLockCompat { if let h = printHandles.removeValue(forKey: url) { arena.release(h) }; prints[url] = nil } }
     func removeAll() {
-        lock.withLock {
+        lock.withLockCompat {
             sourceHandles.values.forEach { arena.release($0) }
             printHandles.values.forEach { arena.release($0) }
             if let h = fullHandle { arena.release(h) }
@@ -240,9 +240,9 @@ final class TextureStore: @unchecked Sendable {
 
     /// Drop only idle pool storage. Borrowed scratch remains owned by its
     /// in-flight render and is returned to a fresh pool when it completes.
-    func dropIdleScratch() { lock.withLock { clearIdleScratchLocked() } }
+    func dropIdleScratch() { lock.withLockCompat { clearIdleScratchLocked() } }
     var idleScratchCount: Int {
-        lock.withLock { idleScratch.values.reduce(0) { $0 + $1.count } }
+        lock.withLockCompat { idleScratch.values.reduce(0) { $0 + $1.count } }
     }
 
     /// Caller holds `lock`.
@@ -255,7 +255,7 @@ final class TextureStore: @unchecked Sendable {
     /// only the reference whose handle is still the one registered here; a
     /// stale closure must not evict a newer entry for the same URL.
     private func dropSource(_ url: URL, matching slot: HandleSlot) {
-        lock.withLock {
+        lock.withLockCompat {
             guard let handle = slot.handle, sourceHandles[url] == handle else { return }
             sourceHandles[url] = nil
             sources[url] = nil
@@ -264,7 +264,7 @@ final class TextureStore: @unchecked Sendable {
     }
 
     private func dropPrint(_ url: URL, matching slot: HandleSlot) {
-        lock.withLock {
+        lock.withLockCompat {
             guard let handle = slot.handle, printHandles[url] == handle else { return }
             printHandles[url] = nil
             prints[url] = nil
@@ -339,7 +339,7 @@ final class TextureStore: @unchecked Sendable {
     }
 
     private func dropIdleScratch(_ key: ScratchKey, matching slot: HandleSlot) {
-        lock.withLock {
+        lock.withLockCompat {
             guard var list = idleScratch[key],
                   let i = list.firstIndex(where: { $0.slot === slot }) else { return }
             list.remove(at: i)
@@ -397,7 +397,7 @@ final class TextureStore: @unchecked Sendable {
         guard width > 0, height > 0, data.count == width * height * 8 else { return nil }
         let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba16Unorm, width: width, height: height, mipmapped: false)
         d.usage = [.shaderRead]
-        d.storageMode = .shared
+        d.storageMode = GPUStorage.cpuTexture   // .shared needs an Apple GPU
         guard let tex = device.makeTexture(descriptor: d) else { return nil }
         data.withUnsafeBytes { raw in
             tex.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0,
@@ -409,7 +409,7 @@ final class TextureStore: @unchecked Sendable {
     func makeWritable(width: Int, height: Int, format: MTLPixelFormat = .rgba16Unorm) -> MTLTexture? {
         let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: format, width: width, height: height, mipmapped: false)
         d.usage = [.shaderRead, .shaderWrite, .renderTarget]
-        d.storageMode = .shared
+        d.storageMode = GPUStorage.cpuTexture   // .shared needs an Apple GPU
         return device.makeTexture(descriptor: d)
     }
 
@@ -417,7 +417,7 @@ final class TextureStore: @unchecked Sendable {
     func makeCurveTable() -> MTLTexture? {
         let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r32Float, width: Curve.tableSize, height: 5, mipmapped: false)
         d.usage = [.shaderRead]
-        d.storageMode = .shared
+        d.storageMode = GPUStorage.cpuTexture   // .shared needs an Apple GPU
         return device.makeTexture(descriptor: d)
     }
 

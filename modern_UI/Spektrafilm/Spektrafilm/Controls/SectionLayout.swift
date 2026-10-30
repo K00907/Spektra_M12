@@ -102,7 +102,7 @@ struct SectionDivider: View {
                     .frame(height: Self.hitHeight)
                     .contentShape(Rectangle())
                     .onHover { hovering = $0 }
-                    .onContinuousHover { phase in
+                    .onContinuousHoverCompat { phase in
                         switch phase {
                         case .active: NSCursor.resizeUpDown.set()
                         case .ended: NSCursor.arrow.set()
@@ -163,9 +163,11 @@ private struct SectionSizing: ViewModifier {
             // First the content at its own size, top-aligned in the height it
             // was given; if that does not fit, the same content in a scroll
             // view. A list that can grow never needs the second.
-            ViewThatFits(in: .vertical) {
-                content.frame(maxHeight: .infinity, alignment: .top)
-                ScrollView(.vertical, showsIndicators: false) { content }
+            // macOS 12: no `ViewThatFits` (macOS 13). The scroll view is
+            // always there; content that fits sits top-aligned in the full
+            // height and simply has nothing to scroll.
+            ScrollView(.vertical, showsIndicators: false) {
+                content.frame(minHeight: h, alignment: .top)
             }
             .frame(height: h, alignment: .top)
             .clipped()
@@ -174,7 +176,7 @@ private struct SectionSizing: ViewModifier {
             content
                 .background(GeometryReader { g in WithPerceptionTracking {
                     Color.clear.onAppear { measuredTotal(g.size.height + header) }
-                        .onChange(of: g.size.height) { _, v in measuredTotal(v + header) }
+                        .onChangeCompat(of: g.size.height) { _, v in measuredTotal(v + header) }
                 } })
         }
     } }

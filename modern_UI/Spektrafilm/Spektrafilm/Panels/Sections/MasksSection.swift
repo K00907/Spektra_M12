@@ -245,7 +245,7 @@ private struct Sublayer: View {
                 Text("Add component").font(Theme.Font.caption).foregroundStyle(Theme.dim)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize(horizontal: false, vertical: true)
+            .menuStyle(.borderlessButton).buttonStyle(.plain).menuIndicator(.hidden).fixedSize(horizontal: false, vertical: true)
             .disabled(mask.components.count >= EditMask.maxComponents)
         }
         .padding(6)

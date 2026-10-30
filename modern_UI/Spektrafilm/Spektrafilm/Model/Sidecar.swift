@@ -227,8 +227,8 @@ struct Sidecar: Codable, Equatable, Sendable {
     /// The real store, ignoring any override. Tests assert on this.
     static let defaultStoreDirectory: URL =
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appending(path: "SpektraLab")
-            .appending(path: "Sidecars")
+            .appendingPathComponent("SpektraLab")
+            .appendingPathComponent("Sidecars")
 
     /// Where the store actually is. Nil means the real one.
     ///
@@ -244,7 +244,7 @@ struct Sidecar: Codable, Equatable, Sendable {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil
             ? nil
             : FileManager.default.temporaryDirectory
-                .appending(path: "spektralab-test-sidecars-\(ProcessInfo.processInfo.processIdentifier)"))
+                .appendingPathComponent("spektralab-test-sidecars-\(ProcessInfo.processInfo.processIdentifier)"))
 
     /// Point the store somewhere else. For tests that want to inspect it.
     static func useStore(at url: URL?) {
@@ -280,7 +280,7 @@ struct Sidecar: Codable, Equatable, Sendable {
         return "\(image.lastPathComponent)-\(hex).spektra.json"
     }
 
-    static func url(for image: URL) -> URL { storeDirectory.appending(path: key(for: image)) }
+    static func url(for image: URL) -> URL { storeDirectory.appendingPathComponent(key(for: image)) }
 
     // MARK: - which file these settings belong to
 
@@ -373,7 +373,7 @@ struct Sidecar: Codable, Equatable, Sendable {
         if let cached = index.value { return cached }
         let names = (try? FileManager.default.contentsOfDirectory(atPath: storeDirectory.path)) ?? []
         let built: [(Source, URL)] = names.filter { $0.hasSuffix(".spektra.json") }.compactMap { name in
-            let url = storeDirectory.appending(path: name)
+            let url = storeDirectory.appendingPathComponent(name)
             guard let data = try? Data(contentsOf: url),
                   let sidecar = try? JSONDecoder().decode(Sidecar.self, from: data),
                   let source = sidecar.source else { return nil }
@@ -422,7 +422,7 @@ struct Sidecar: Codable, Equatable, Sendable {
     /// settings.
     static func neighbourURL(for image: URL) -> URL {
         image.deletingLastPathComponent()
-            .appending(path: image.lastPathComponent + ".spektra.json")
+            .appendingPathComponent(image.lastPathComponent + ".spektra.json")
     }
 
     /// The oldest name, from before the extension was kept. Read once and

@@ -94,8 +94,8 @@ private final class ThumbnailStorage: @unchecked Sendable {
         clock = 0
     }
 
-    var count: Int { lock.withLock { entries.count } }
-    var bytes: Int { lock.withLock { total } }
+    var count: Int { lock.withLockCompat { entries.count } }
+    var bytes: Int { lock.withLockCompat { total } }
 
     private func drop(_ key: ThumbnailKey, matching slot: Slot) {
         lock.lock()
@@ -153,7 +153,7 @@ final class ThumbnailCache: @unchecked Sendable {
         if let cached = storage.image(for: key) { return cached }
 
         let request: (task: Task<Decoded?, Never>, generation: Int, revision: Int) =
-            lock.withLock {
+            lock.withLockCompat {
                 if let task = inFlight[key] {
                     return (task, generation, revision[url] ?? 0)
                 }
@@ -172,7 +172,7 @@ final class ThumbnailCache: @unchecked Sendable {
             }
 
         let decoded = await request.task.value
-        let accepted = lock.withLock {
+        let accepted = lock.withLockCompat {
             guard generation == request.generation,
                   (revision[url] ?? 0) == request.revision else { return false }
             inFlight[key] = nil
@@ -189,7 +189,7 @@ final class ThumbnailCache: @unchecked Sendable {
     /// the key's size, and the replacement wins for every requested size for
     /// that URL until it is evicted.
     func store(_ image: CGImage, for url: URL) {
-        let stale = lock.withLock {
+        let stale = lock.withLockCompat {
             revision[url, default: 0] += 1
             let keys = inFlight.keys.filter { $0.url == url }
             let tasks = keys.compactMap { inFlight.removeValue(forKey: $0) }
@@ -203,7 +203,7 @@ final class ThumbnailCache: @unchecked Sendable {
     /// A new folder is a new generation. Detached work from the old one may
     /// finish, but it cannot repopulate the cache or replace a newer result.
     func clear() {
-        let stale = lock.withLock {
+        let stale = lock.withLockCompat {
             generation &+= 1
             revision.removeAll()
             let tasks = Array(inFlight.values)

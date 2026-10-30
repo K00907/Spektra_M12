@@ -97,7 +97,7 @@ final class RenderScheduler {
             let (delta, layers) = wanted.delta(from: sent)
             if delta.isEmpty { return }
             let shoot = layers.contains(.shoot)
-            try? await Task.sleep(for: .milliseconds(shoot ? 220 : 40))
+            try? await Task.sleep(ms: (shoot ? 220 : 40))
             if Task.isCancelled || gen != generation {
                 // A render that was never issued: the edit it was for has been
                 // superseded before the engine saw anything. Recorded at

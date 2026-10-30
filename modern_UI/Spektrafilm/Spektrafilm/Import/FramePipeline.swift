@@ -38,8 +38,8 @@ import Foundation
 private final class CancellationFlag: @unchecked Sendable {
     private let lock = NSLock()
     private var value = false
-    func set() { lock.withLock { value = true } }
-    var isSet: Bool { lock.withLock { value } }
+    func set() { lock.withLockCompat { value = true } }
+    var isSet: Bool { lock.withLockCompat { value } }
 }
 
 final class FramePipeline: @unchecked Sendable {
@@ -55,16 +55,16 @@ final class FramePipeline: @unchecked Sendable {
 
     /// How many jobs actually ran their body (counted from the serial queue,
     /// so for tests and the diagnostics log, not for the hot path).
-    var jobsRun: Int { lock.withLock { _jobsRun } }
+    var jobsRun: Int { lock.withLockCompat { _jobsRun } }
     /// How many jobs were superseded before their body started.
-    var jobsSkipped: Int { lock.withLock { _jobsSkipped } }
+    var jobsSkipped: Int { lock.withLockCompat { _jobsSkipped } }
 
     /// Bump the generation, making every job of an older generation stale.
     /// A frame switch, a reopen and a service restart all call this; the next
     /// `checkpoint()` of any older job then throws `CancellationError`.
     @discardableResult
     func supersede() -> Int {
-        lock.withLock {
+        lock.withLockCompat {
             _generation += 1
             return _generation
         }
@@ -73,7 +73,7 @@ final class FramePipeline: @unchecked Sendable {
     /// Whether `g` is the current generation — a job's checkpoint asks this
     /// on every stage boundary.
     func isCurrent(_ g: Int) -> Bool {
-        lock.withLock { g == _generation }
+        lock.withLockCompat { g == _generation }
     }
 
     /// Run `work` on the serial queue, stoppable at its `checkpoint`s.
@@ -127,6 +127,6 @@ final class FramePipeline: @unchecked Sendable {
         }
     }
 
-    private func recordRun() { lock.withLock { _jobsRun += 1 } }
-    private func recordSkipped() { lock.withLock { _jobsSkipped += 1 } }
+    private func recordRun() { lock.withLockCompat { _jobsRun += 1 } }
+    private func recordSkipped() { lock.withLockCompat { _jobsSkipped += 1 } }
 }

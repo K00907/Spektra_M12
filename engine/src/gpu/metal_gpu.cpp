@@ -19,6 +19,8 @@
 // are the C function-pointer API, which is what keeps this a `.cpp` rather
 // than a `.mm` (see the file header).
 #include <dispatch/dispatch.h>
+// Intel port: the managed copy of a result keeps its buffer alive (below).
+#include <objc/runtime.h>
 
 #include <sys/mman.h>
 #include <unistd.h>
@@ -197,6 +199,17 @@ public:
             else if (got[i] != want) ++mismatched;
         }
         end_frame();
+        // Intel port. An AMD or Intel GPU's Metal compiler may simply not
+        // contract `a*b - a*b` into an fma, and then every probe is exactly
+        // zero *without* fast math. That is one rounding per contraction --
+        // the case the Vulkan port accepts for lavapipe -- and the kernels'
+        // own error-free transforms call `fma` explicitly, which is exact on
+        // these GPUs. So on a non-Apple GPU all-zero is reported, not refused.
+        if (zeros == n && !device_->supportsFamily(MTL::GPUFamilyApple1)) {
+            detail = "safe (probe: this non-Apple GPU does not contract a*b into an fma; "
+                     "explicit fma is still fused)";
+            return true;
+        }
         if (zeros == n) {
             detail = "the Metal library was compiled with fast math: `a*b - a*b` came back "
                      "exactly zero for all 64 probes. Rebuild with "
@@ -675,6 +688,32 @@ public:
 
     void* texture(Buffer* b, uint32_t width, uint32_t height,
                   uint32_t row_stride_px, std::string& error) override {
+        // Intel port. A shared texture over the buffer is the zero-copy path,
+        // and only an Apple GPU takes one: "on non-Apple family GPUs, the
+        // shared storage mode isn't available for MTLTexture instances"
+        // (Metal documentation). On an AMD or Intel GPU the result is copied
+        // into a managed texture instead -- one memcpy of a buffer the GPU has
+        // already finished with (`materialise` flushes first) -- and the
+        // texture keeps the buffer alive, because `spk_result::rgba16` still
+        // points into it, exactly as the buffer-backed texture would.
+        if (!device_->supportsFamily(MTL::GPUFamilyApple1)) {
+            MTL::TextureDescriptor* desc = MTL::TextureDescriptor::alloc()->init();
+            desc->setTextureType(MTL::TextureType2D);
+            desc->setPixelFormat(MTL::PixelFormatRGBA16Unorm);
+            desc->setWidth(width);
+            desc->setHeight(height);
+            desc->setUsage(MTL::TextureUsageShaderRead);
+            desc->setStorageMode(MTL::StorageModeManaged);
+            MTL::Texture* tex = device_->newTexture(desc);
+            desc->release();
+            if (!tex) { error = "could not create a managed texture for the result"; return nullptr; }
+            tex->replaceRegion(MTL::Region(0, 0, width, height), 0, b->mtl->contents(),
+                               NS::UInteger(row_stride_px) * 8);
+            static char keep_alive_key;
+            objc_setAssociatedObject(reinterpret_cast<id>(tex), &keep_alive_key,
+                                     reinterpret_cast<id>(b->mtl), OBJC_ASSOCIATION_RETAIN);
+            return tex;
+        }
         MTL::TextureDescriptor* desc = MTL::TextureDescriptor::alloc()->init();
         desc->setTextureType(MTL::TextureType2D);
         desc->setPixelFormat(MTL::PixelFormatRGBA16Unorm);

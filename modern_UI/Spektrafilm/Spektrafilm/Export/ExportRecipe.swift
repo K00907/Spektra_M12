@@ -603,7 +603,7 @@ struct ExportRecipe: Codable, Identifiable, Hashable, Sendable {
         case .fixed(let path): base = URL(fileURLWithPath: path)
         }
         let sub = subfolder.trimmingCharacters(in: .whitespaces)
-        return sub.isEmpty ? base : base.appending(path: sub)
+        return sub.isEmpty ? base : base.appendingPathComponent(sub)
     }
 
     /// The path this recipe would write for `stem`, ignoring the existing-file
@@ -619,8 +619,8 @@ struct ExportRecipe: Codable, Identifiable, Hashable, Sendable {
     /// carry one pair of view LUTs (`CineonLUT.copyBeside`).
     func destinationPath(for source: URL, context: NamingRule.Context, stem: String) -> URL {
         let dir = directory(for: source)
-        guard format == .di else { return dir.appending(path: "\(stem).\(format.ext)") }
-        return dir.appending(path: "\(stem)_DI.\(format.ext)")
+        guard format == .di else { return dir.appendingPathComponent("\(stem).\(format.ext)") }
+        return dir.appendingPathComponent("\(stem)_DI.\(format.ext)")
     }
 
     /// The full destination, honouring `existing`. Returns `nil` only for
@@ -733,8 +733,8 @@ final class ExportRecipeStore {
 
     static let url: URL = {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appending(path: "SpektraLab")
-        return dir.appending(path: "export-recipes.json")
+            .appendingPathComponent("SpektraLab")
+        return dir.appendingPathComponent("export-recipes.json")
     }()
 
     /// The file this store reads and writes. Injectable so a test can point

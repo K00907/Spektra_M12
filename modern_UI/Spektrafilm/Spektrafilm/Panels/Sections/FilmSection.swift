@@ -166,9 +166,8 @@ struct StockList: View {
                     } }
                 }
             }
-            .scrollIndicators(.visible)
             .onAppear { if let selected { proxy.scrollTo(selected, anchor: .center) } }
-            .onChange(of: selected) { _, new in
+            .onChangeCompat(of: selected) { _, new in
                 guard let new else { return }
                 withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(new, anchor: .center) }
             }
