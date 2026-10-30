@@ -10,6 +10,11 @@ name: Intel macOS 12 build
 
 on:
   workflow_dispatch:
+    inputs:
+      runner:
+        description: "Runner label (macos-26 is Apple silicon; macos-15-intel has more capacity but older Xcode)"
+        required: false
+        default: macos-26
   push:
     branches: [intel-macos12]
 
@@ -22,16 +27,20 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-26
+    runs-on: ${{ inputs.runner || 'macos-26' }}
     timeout-minutes: 90
     env:
       APP_DIR: modern_UI/Spektrafilm
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select Xcode 26.6
+      - name: Select Xcode (26.6, else the newest 26.x on the image)
         run: |
-          sudo xcode-select -s /Applications/Xcode_26.6.app || ls /Applications | grep Xcode
+          ls -d /Applications/Xcode*.app
+          if [ -d /Applications/Xcode_26.6.app ]; then x=/Applications/Xcode_26.6.app
+          else x=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1); fi
+          echo "using $x"
+          sudo xcode-select -s "$x"
           xcodebuild -version
 
       - name: Metal toolchain
